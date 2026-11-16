@@ -63,3 +63,9 @@ Preview assets: bundled landscape photo from [Unsplash](https://images.unsplash.
 The Supabase publishable key is intentionally included in the browser bundle; `.env` exclusion does not hide `VITE_` values from visitors. Never supply secret/service-role keys or permanent privileged TURN credentials. Room-topic hashes and signaling encryption keys use different domain-separated derivations. Room links grant access and should stay private. Peer photo transfers have bounded chunk counts and concurrent assemblies. Cloudflare Pages serves the security headers in `public/_headers`, including a Content Security Policy.
 
 Public Supabase Broadcast access still allows project quota abuse by someone with the publishable key; encrypted signaling does not provide server-side rate limiting. The app does not create database tables or buckets. If this project has other tables/buckets, review their RLS and storage policies in Supabase before sharing the site. No dashboard policies or deployed Cloudflare settings were audited from this workspace. Cross-network Remote Duo still needs testing.
+
+## Reference four-cut border
+
+The Four-cut template recreates the user-supplied brown LIFEFOURCUTS/인생네컷 reference at 528×1584 per strip. Two matching strips duplicate the same four ordered photographs in each column; remote photos remain paired within each duplicated row. Date stamps use the browser's current local date as YYYY.MM.DD. Print output is 1200×1800. Setup and final previews share the export renderer.
+
+Korean lettering uses bundled Noto Sans KR Light (weight 200); date/side text uses bundled Roboto. Font licenses are included in public/fonts. These are close matches, not verified original fonts. Hamu Studio's public website (https://hamustudio.com/) does not supply a complete downloadable frame catalog; the existing other color templates are original app designs, not claimed reproductions of Hamu's collection.

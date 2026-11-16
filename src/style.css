@@ -47,3 +47,6 @@
  .film-controls .film-option b{font-size:11px}
  .film-controls>.slider,.film-controls .export-row,.film-controls .frame-basics .field-grid{max-width:none}
 }
+
+.frame-example{max-height:580px;max-width:90%;width:auto;object-fit:contain;box-shadow:3px 8px 18px #4e3b3420}.booth-showcase{padding:28px}.strip-preview img{height:auto}
+@media(max-width:760px){.frame-example{max-height:460px}.booth-showcase{min-height:0;padding:24px}}
