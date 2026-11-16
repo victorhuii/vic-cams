@@ -4,7 +4,7 @@ export const remoteConfigured=!!(import.meta.env.VITE_SUPABASE_URL&&import.meta.
 export function createCode(){return `${Date.now().toString(36)}-${Array.from(crypto.getRandomValues(new Uint8Array(12)),n=>n.toString(16).padStart(2,'0')).join('')}`;}
 export function normalizeCode(code:string){return code.trim().toLowerCase().replace(/\s+/g,'-');}
 export function legacyCode(code:string){return /^[a-z0-9]+-[a-f0-9]{24}$/.test(code);}
-export function validCode(code:string,now=Date.now()){if(legacyCode(code)){const age=now-parseInt(code.split('-')[0],36);return Number.isFinite(age)&&age>=-60000&&age<3600000;}return /^[a-z0-9][a-z0-9_-]{11,63}$/.test(code);}
+export function validCode(code:string,now=Date.now()){if(legacyCode(code)){const age=now-parseInt(code.split('-')[0],36);return Number.isFinite(age)&&age>=-60000&&age<3600000;}return /^[a-z0-9][a-z0-9_-]{3,63}$/.test(code);}
 
 function b64(bytes:Uint8Array){return btoa(String.fromCharCode(...bytes));}function bytes(s:string){return Uint8Array.from(atob(s),c=>c.charCodeAt(0));}
 export async function signalingSecrets(code:string){
@@ -15,7 +15,7 @@ export async function signalingSecrets(code:string){
 export class Duo {
  pc:RTCPeerConnection;channel?:RealtimeChannel;client:SupabaseClient;data?:RTCDataChannel;id=crypto.randomUUID();peer='';key?:CryptoKey;offset=0;bestRtt=Infinity;closed=false;private chunks=new Map<string,string[]>();private candidates:RTCIceCandidateInit[]=[];private heartbeat?:ReturnType<typeof setInterval>;private expiry?:ReturnType<typeof setTimeout>;private joinTimeout?:ReturnType<typeof setTimeout>;private chain=Promise.resolve();private accepting=false;private conflict=false;expiresAt=Date.now()+3600000;
  constructor(public code:string,public host:boolean,stream:MediaStream,public onPacket:(p:Packet)=>void,public onStream:(s:MediaStream)=>void,public onStatus:(s:string)=>void){
- if(!remoteConfigured)throw new Error('Remote Duo needs Supabase configuration. Local Booth is ready to use.');if(!validCode(code))throw new Error('Use a room phrase with 12–64 letters, numbers, hyphens or underscores, or a valid invitation code.');if(legacyCode(code))this.expiresAt=parseInt(code.split('-')[0],36)+3600000;
+ if(!remoteConfigured)throw new Error('Remote Duo needs Supabase configuration. Local Booth is ready to use.');if(!validCode(code))throw new Error('Use a room phrase with 4–64 letters, numbers, hyphens or underscores, or a valid invitation code.');if(legacyCode(code))this.expiresAt=parseInt(code.split('-')[0],36)+3600000;
  this.client=createClient(import.meta.env.VITE_SUPABASE_URL,import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
  const iceServers:RTCIceServer[]=[{urls:'stun:stun.l.google.com:19302'}];if(import.meta.env.VITE_TURN_URL)iceServers.push({urls:import.meta.env.VITE_TURN_URL,username:import.meta.env.VITE_TURN_USERNAME,credential:import.meta.env.VITE_TURN_CREDENTIAL});this.pc=new RTCPeerConnection({iceServers});stream.getTracks().forEach(t=>this.pc.addTrack(t,stream));this.pc.ontrack=e=>onStream(e.streams[0]);this.pc.onicecandidate=e=>{if(e.candidate)void this.signal({type:'ice',candidate:e.candidate.toJSON()});};
  this.pc.onconnectionstatechange=()=>{if(this.closed)return;const s=this.pc.connectionState;if(['disconnected','failed','closed'].includes(s)){onStatus('Connection interrupted. Pause and reconnect with the same room code.');onPacket({type:'disconnect'});}};
