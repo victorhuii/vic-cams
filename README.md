@@ -98,3 +98,7 @@ Model and WASM assets are served from this app; the segmentation SDK is lazy loa
 Every pose has a scheduled seven-second countdown, with a two-second preview between poses. During shooting, the UI shows only equal-sized remote camera views and one shared timer; setup controls and save prompts are hidden. Press Escape to cancel if necessary. Controls return before capture and in review. Automatic saving remains subject to the cloud setup, upload completion and quota limits above.
 
 Sources: [MediaPipe Image Segmenter](https://developers.google.com/edge/mediapipe/solutions/vision/image_segmenter), [selfie model](https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter_landscape/float16/1/selfie_segmenter_landscape.tflite). The MediaPipe license is bundled in public/models. The foreground-preservation test uses a public [Unsplash portrait](https://images.unsplash.com/photo-1494790108377-be9c29b29330), stored only as a test fixture.
+
+### Countdown version compatibility
+
+Capture plans carry a protocol identifier, a seven-second duration and every absolute pose deadline. The host uses the same plan it sends; guests apply clock offset compensation to all deadlines. Setup acknowledgements must match the protocol before readiness/capture is allowed. An older peer gets a persistent refresh/rejoin warning instead of running different timing. HTML entry points revalidate cache, while hashed assets remain immutable. After deploying this update, both participants must refresh their tabs and create/join a fresh room.
