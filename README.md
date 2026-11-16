@@ -27,6 +27,8 @@ Camera access requires localhost or HTTPS. Film Studio and Local Booth work with
 
 The public browser key cannot run the SQL migration or enable Anonymous Sign-Ins. Use the dashboard or an authenticated Supabase administration integration for those steps. No secret/service-role key belongs in the frontend.
 
+To verify real saves with labeled synthetic photos, run `VIC_TEST_LIVE_STORAGE=1 VITE_CLOUD_ARCHIVE_ENABLED=true npm run test:e2e -- e2e/cloud-live.spec.ts` with no existing development server on port 5174. This opt-in test uploads through Film Studio and Photobooth, waits for successful cloud saves, reads back the database rows, and downloads the private files to compare their SHA-256 hashes. It leaves the drafts in Storage so you can inspect them; the printed verification report identifies their visitor/session folder. Ordinary tests skip this cloud-writing test.
+
 The private bucket contains binary images; the table stores metadata and image paths. Visitors can upload/read/update only within their own authenticated identity. There is no visitor delete policy for permanent backups. The project owner can inspect and delete backups through the Supabase dashboard. Existing unrelated bucket/table policies were not audited by this migration.
 
 ## Session gallery behavior
