@@ -1,7 +1,9 @@
 // Editable vector borders: photo windows always contain the visitor's own pictures.
-export type FramePreset={name:string;color:string;ink:string;style?:string;poses?:number};
+export type FramePreset={name:string;color:string;ink:string;style?:string;poses?:number;defaultFilter?:string};
 export const referenceFrames:FramePreset[]=[
  {name:'Borderless',color:'#ffffff',ink:'#333333',style:'borderless'},
+ {name:'Borderless Duo',color:'#ffffff',ink:'#333333',style:'duo'},
+ {name:'Sepia Six-cut',color:'#595642',ink:'#f4ead1',style:'sepia',poses:6,defaultFilter:'Sepia'},
  {name:'Pink Gingham',color:'#f9d9df',ink:'#4a3837',style:'gingham'},
  {name:'Cozy Doodles',color:'#dbe8e4',ink:'#383c38',style:'doodles'},
  {name:'Autumn Bears',color:'#ffde70',ink:'#493c29',style:'autumn'},
@@ -16,13 +18,15 @@ export const referenceFrames:FramePreset[]=[
 export function presetPoses(name:string){return referenceFrames.find(f=>f.name===name)?.poses??4;}
 export type Window={x:number;y:number;width:number;height:number};
 export function presetGeometry(style:string){
+ if(style==='duo')return {width:375,height:1364,windows:Array.from({length:4},(_,i)=>({x:0,y:i*341,width:375,height:341})),footer:0};
+ if(style==='sepia')return {width:1040,height:1734,windows:Array.from({length:6},(_,i)=>({x:32+(i%2)*488,y:Math.floor(i/2)*578,width:488,height:578})),footer:0};
  if(style==='crumb')return {width:1040,height:1584,windows:Array.from({length:6},(_,i)=>({x:75+(i%2)*455,y:80+Math.floor(i/2)*450,width:434,height:434})),footer:1550};
  if(style==='contact')return {width:1040,height:1584,windows:Array.from({length:4},(_,i)=>({x:38+(i%2)*490,y:96+Math.floor(i/2)*746,width:474,height:650})),footer:1544};
  if(style==='six'||style==='hearts')return {width:1040,height:1584,windows:Array.from({length:6},(_,i)=>({x:style==='six'?88+(i%2)*456:34+(i%2)*492,y:(style==='six'?60:42)+Math.floor(i/2)*(style==='six'?468:434)+(style==='six'&&i%2?34:0),width:style==='six'?400:480,height:style==='six'?458:420})),footer:1540};
  if(style==='borderless')return {width:520,height:1736,windows:Array.from({length:4},(_,i)=>({x:0,y:i*434,width:520,height:434})),footer:0};
  const x=style==='doodles'?20:style==='gingham'?18:34;
  const top=style==='doodles'?90:style==='gingham'?54:44;
- return {width:528,height:1584,windows:Array.from({length:4},(_,i)=>({x,y:top+i*330,width:528-x*2,height:308})),footer:1547};
+ return {width:528,height:1584,windows:Array.from({length:4},(_,i)=>({x,y:top+i*330,width:528-x*2,height:308})),footer:style==='stars'?1570:1547};
 }
 const heart='<path d="M0 13 C-48 -17 -25 -42 0 -20 C25 -42 48 -17 0 13Z"/>';
 const leaf='<path d="M0 0 Q-42 -15 -16 -49 Q10 -52 27 -65 Q45 -12 0 0Z"/><path d="M0 0 18 -46" fill="none"/>';
@@ -50,7 +54,13 @@ export function borderSvg(frame:FramePreset,thumbnail=false){
   for(let i=0;i<9;i++){const x=i%2?528:0,y=275+i*165;ornaments+=decal(flower,x,y,1.1,'#f9d4d8',i*35).replace('stroke="#35372c"','stroke="#f3bec7"');}
   for(let i=0;i<14;i++)ornaments+=`<path d="M${(i*133)%528} ${15+i*103}q-16-8-23 18q26 8 23-18" fill="#efb7c3" opacity=".7"/>`;
   for(const [x,y] of [[92,36],[280,33],[340,1047]])ornaments+=`<path d="M${x} ${y}q-30 5-25 16q30 8 73-2q12-9-8-13q-10-20-40-1Z" fill="#fffefa" stroke="#daedf0" stroke-width="4"/>`;
- }else if(style==='stars'||style==='doodles'){
+ }else if(style==='stars'){
+  const chef= bear+'<path d="M-41 39Q0 53 41 39L47 95Q0 115-47 95Z" fill="#fffdf6"/><path d="M-35-38q-12-18 2-26q-2-21 17-21q16-18 29 0q25-7 23 21q17 15 3 26Z" fill="#fffdf6"/><path d="M-34-38h68v9h-68Z" fill="#fffdf6"/><g fill="#35372c"><circle cy="62" r="3"/><circle cy="83" r="3"/></g>';
+  const baker=bunny+'<path d="M-39 40Q0 54 39 40L42 92Q0 111-42 92Z" fill="#bc916b"/><ellipse cy="-40" rx="39" ry="10" fill="#b58b61"/><path d="M-24-42q-5-35 24-35q29 0 24 35Z" fill="#c5a17b"/><path d="M-37 56q28-3 37 17q10-20 38-17M-4 74q-11-19 3-22q17 0 11 16" fill="#efd0a5"/>';
+  ornaments+=decal(bear,55,310,.85,'#efc59a',-75)+decal(bunny,111,283,.85,'#fffef8',-48)+decal(chef,423,625,.72,'#efc59a',15)+decal(bunny,457,670,.85,'#fffef8',65)+decal(bunny,29,1008,.45,'#fffef8',-15)+decal(bear,486,1006,.45,'#efc59a',12)+decal(chef,143,1428,1.2,'#efc59a')+decal(baker,337,1445,1.15,'#fffef8')+decal(bunny,51,1516,.3,'#fffef8',-15);
+  for(let i=0;i<16;i++)ornaments+=decal(star,i%2?520:8,9+i*92,.75,'#ffdc66',i*31);
+  ornaments+=decal(star,463,1458,.8,'#ffdc66',18)+decal(star,410,1547,.7,'#ffdc66',-15)+decal(star,97,1563,.55,'#ffdc66');
+ }else if(style==='doodles'){
   ornaments+=decal(bear,55,345,.75,'#f0ce9d',-12)+decal(bunny,135,345,.75,'#fffef5',12)+decal(bunny,445,675,.8,'#fffef5',-8)+decal(bear,445,1015,.7,'#f3d68e')+decal(bear,320,1435,1,'#f0ce9d',15)+decal(bunny,190,1445,.95,'#fffef5',-9);
   if(style==='doodles')ornaments+=`<g stroke="#444438" stroke-width="3" fill="none">${g.windows.map(w=>`<path d="M${w.x} ${w.y+4}q100-6 180 0t${w.width-180} 0v${w.height-8}q-100 8-180 0t-${w.width-180} 0Z"/>`).join('')}</g>`+decal('<path d="M-34 0q0-45 34-45T34 0ZM-5 0h10l7 26h-24Z"/>',355,80,1,'#e9b37e');
   for(let i=0;i<17;i++)ornaments+=decal(star,i%2?514:9,80+i*89,.5,'#ffe27b',i*37);
