@@ -57,3 +57,9 @@ Local storage is per browser/origin; it is not a backup. Clearing browser data, 
 Film bloom uses a blurred luminance mask with a warm halation tint for Cine; it is not a calibrated optical model. Booth cropping is global for the four selected rows. Changing export mirroring is supported before capture; previously captured originals keep their original orientation. Captions and dates use the current local date. Full physical camera, print color calibration, and two-device network synchronization require manual validation. The privacy note's save consent is an app control, not protection against a participant taking a screenshot.
 
 Preview assets: bundled landscape photo from [Unsplash](https://images.unsplash.com/photo-1470252649378-9c29740c9fa8); existing cat photos reused from the provided Mimicams assets. The cat photos are example artwork, never session captures. Typography uses Google Fonts with system fallbacks.
+
+## Security review
+
+The Supabase publishable key is intentionally included in the browser bundle; `.env` exclusion does not hide `VITE_` values from visitors. Never supply secret/service-role keys or permanent privileged TURN credentials. Room-topic hashes and signaling encryption keys use different domain-separated derivations. Room links grant access and should stay private. Peer photo transfers have bounded chunk counts and concurrent assemblies. Cloudflare Pages serves the security headers in `public/_headers`, including a Content Security Policy.
+
+Public Supabase Broadcast access still allows project quota abuse by someone with the publishable key; encrypted signaling does not provide server-side rate limiting. The app does not create database tables or buckets. If this project has other tables/buckets, review their RLS and storage policies in Supabase before sharing the site. No dashboard policies or deployed Cloudflare settings were audited from this workspace. Cross-network Remote Duo still needs testing.
