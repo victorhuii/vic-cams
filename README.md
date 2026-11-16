@@ -52,7 +52,7 @@ Random room codes contain 96 random bits plus a timestamp. Custom codes are norm
 
 For restricted networks, configure a TURN relay with `VITE_TURN_URL`, `VITE_TURN_USERNAME`, and `VITE_TURN_CREDENTIAL`. These frontend values are visible; use short-lived TURN credentials, never a permanent privileged secret. STUN alone does not connect every pair of networks.
 
-A disconnect cancels active shooting. Both participants can reconnect with the same code and their existing roles. A refreshed host should create a new room and share its link. Hidden tabs cancel countdowns because browser background timing cannot be trusted.
+A disconnect cancels active shooting. Both participants should leave the room and create/join a new room. A refreshed host should create a new room and share its link. Hidden tabs cancel countdowns because browser background timing cannot be trusted.
 
 References: [Anonymous Sign-Ins](https://supabase.com/docs/guides/auth/auth-anonymous), [Storage access policies](https://supabase.com/docs/guides/storage/security/access-control), [Realtime Broadcast](https://supabase.com/docs/guides/realtime/broadcast).
 
