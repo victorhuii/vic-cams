@@ -52,3 +52,5 @@
 @media(max-width:760px){.frame-example{max-height:460px}.booth-showcase{min-height:0;padding:24px}}
 
 .capture-disclosure{max-width:1272px;margin:20px auto 0;padding:12px 20px;background:#eaeede;border-radius:8px;font-size:11px;line-height:1.7;color:#59694b}.gallery-sync{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:12px;margin:12px 0 22px}.cloud-status{font-size:10px;color:#6f7d60;margin-top:8px;line-height:1.6;overflow-wrap:anywhere}.cloud-status.error{color:#9b6152}@media(max-width:760px){.capture-disclosure{margin:15px 20px 0}.gallery-sync{align-items:flex-start;flex-direction:column;gap:5px}}
+
+@font-face{font-family:'Frame Korean';src:url('/fonts/frame-korean.ttf') format('truetype');font-style:normal;font-weight:200;font-display:swap}.home-strip b{font-family:'Frame Korean',sans-serif;font-weight:200;letter-spacing:0;font-size:13px}.frame-grid button>span{width:30px;height:90px;padding:3px 2px 14px;gap:2px}
