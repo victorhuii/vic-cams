@@ -46,9 +46,9 @@ Image uploads are capped at 20 MB per file by the bucket. Full-resolution origin
 
 Use the same Supabase URL and publishable key. Under **Realtime → Settings**, allow public Broadcast channels. No photo data travels through public Broadcast: room topics and AES-GCM signaling keys use separate domain-separated derivations, and video/photos use encrypted WebRTC connections.
 
-Host: Photobooth → Remote Duo → Open camera → Create private room → Copy invitation link. Guest opens the HTTPS link, grants camera access and joins. Both mark ready; host starts. Each pose has its own ten-second countdown. The host schedules a shared timestamp; seven clock probes select a low-RTT clock offset. Selection and ordering synchronize through the peer data channel.
+Host: Photobooth → Remote Duo → Create room → choose a private join phrase (12–64 characters) or leave blank for a random code → Create and choose strip. Camera permission is requested during room creation so the peers can connect before choosing a strip. Guest chooses Join room and enters the same code, or follows the invitation link. After connection, the host selects frame, layout and 4/6/8 poses. The guest sees those choices and the same frame preview. The host continues to cameras; both mark ready; host starts. Settings use acknowledged revisions: changing an option clears both ready states and shooting is blocked until the latest options are acknowledged. Each pose has its own ten-second countdown. The host schedules a shared timestamp; seven clock probes select a low-RTT clock offset. Selection and ordering synchronize through the peer data channel.
 
-Rooms contain 96 random bits plus a timestamp, expire after one hour and put their secret in the URL fragment. Share links privately. Public Broadcast still permits project-quota abuse by people with the public key; client encryption is not server-side rate limiting.
+Random room codes contain 96 random bits plus a timestamp. Custom codes are normalized to lowercase, turn spaces into hyphens and require 12–64 letters/numbers/hyphens/underscores. They act as the room password; use a unique private phrase. Custom signaling uses PBKDF2-SHA256 (210,000 iterations) with distinct key/topic material. Rooms expire an hour after host creation; guests use the expiry advertised by the host. Conflicting hosts are detected with encrypted presence probes, which are best-effort signaling rather than an atomic server reservation. Links put the room code in the URL fragment. Share links privately. Public Broadcast still permits project-quota abuse by people with the public key; client encryption is not server-side rate limiting.
 
 For restricted networks, configure a TURN relay with `VITE_TURN_URL`, `VITE_TURN_USERNAME`, and `VITE_TURN_CREDENTIAL`. These frontend values are visible; use short-lived TURN credentials, never a permanent privileged secret. STUN alone does not connect every pair of networks.
 
@@ -73,7 +73,7 @@ npm run build
 npm run test:e2e
 ```
 
-Chrome tests use a synthetic MediaDevices camera and actual canvas/IndexedDB/export code. Cloud unit tests mock the Supabase SDK to verify private path ownership, metadata writes, anonymous authentication and error propagation; they do not prove live database policies. Live storage/SQL and cross-network Remote Duo require configuration and manual/integration testing against the actual project.
+Chrome tests use a synthetic MediaDevices camera and actual canvas/IndexedDB/export code. Cloud unit tests mock the Supabase SDK to verify private path ownership, metadata writes, anonymous authentication and error propagation; they do not prove live database policies. Live storage/SQL and cross-network Remote Duo require configuration and manual/integration testing against the actual project. The opt-in test `VIC_TEST_LIVE_DUO=1 npm run test:e2e -- --grep "live Supabase peers"` uses actual configured Supabase Broadcast and two Chrome peers with synthetic camera streams to verify room choices and readiness; it never captures or uploads photos.
 
 ## Reference border and assets
 
@@ -82,3 +82,9 @@ Four-cut recreates the supplied brown LIFEFOURCUTS/인생네컷 reference at 528
 Bundled Noto Sans KR (weight 200) and Roboto are close lettering matches, not verified originals; licenses are in `public/fonts`. Hamu Studio's public site does not provide a complete downloadable frame catalog. Other frame colors are original app templates.
 
 Landscape preview: [Unsplash source](https://images.unsplash.com/photo-1470252649378-9c29740c9fa8). Cat previews reuse the supplied Mimicams assets. Preview artwork is never substituted for captured session photos. UI fonts use Google Fonts with system fallbacks.
+
+### Remote Duo verification
+
+Verified with the configured live Supabase Broadcast service and two local headless Chrome contexts using real WebRTC and synthetic MediaDevices streams: custom-code create/join, shared frame/layout/6-pose choices, guest read-only controls, camera-stage transitions, acknowledged settings and readiness resets, duplicate-host rejection, and a complete synchronized six-pose session. Both peers received all six paired captures and generated identical final strip pixels. Gallery entries stayed empty while permanent-save consent was off.
+
+To rerun the capture check explicitly: `VIC_TEST_LIVE_CAPTURE=1 npm run test:e2e -- --grep "live remote six-pose"`. This takes about 80 seconds. It captures synthetic peer images in memory; it does not grant save consent. Physical cameras, separate devices, restricted networks and TURN remain separate deployment checks. No additional room SQL migration is required.
