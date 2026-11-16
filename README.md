@@ -1,71 +1,84 @@
 # VIC CAMS
 
-A browser photo studio and four-cut photobooth. Built in this separate workspace to preserve the existing Mimicams gesture-camera project.
+React/Vite photo studio with analog film processing, local/remote photobooths, and a temporary gallery with optional private Supabase backups.
 
-## Run
+## Run locally
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open the Local URL printed by Vite. Camera access works on localhost or HTTPS. No account, API key, or backend is needed for Film Studio, Local Booth, or the archive.
+Camera access requires localhost or HTTPS. Film Studio and Local Booth work without a backend.
 
-## Included
+## Turn on automatic database saving
 
-- Responsive cream/pastel homepage with instant-photo and four-cut previews.
-- JPEG, PNG and WebP upload/drop; real camera capture; original preservation.
-- Eight original film-inspired pixel-processing configurations; deterministic luminance-dependent grain, highlight shoulder, color temperature/tint, saturation, contrast, exposure, fade, vignette and highlight glow. These are interpretations, not exact commercial film emulations.
-- Non-destructive adjustments, before/after hold, crop ratios, zoom, position, rotation, six frame options, editable paper, caption/date, full-resolution PNG/JPEG composites. No Border exports just the graded crop.
-- 4/6/8 camera poses, individual 10-second countdowns, flash, automatic progression, pause/resume, cancellation, retakes, exactly four ordered selections and global filter/crop changes.
-- Modular frame definitions in `src/features/booth/render.ts`; original Korean-style four-cut default. The supplied reference screenshot was not available as an on-disk asset, so no screenshot was extracted or copied into a template.
-- Vertical strip, grid, and 1200×1800 portrait 4×6 print sheet with two strips. Print at 4×6 inches (300 pixels/inch); disable printer scaling. Remote paired strips necessarily fit wider rows into the print windows.
-- IndexedDB source/capture and creation archive; reopen, edit, download, delete, persistence after refresh, actionable storage errors. Remote captures are not archived before mutual consent.
-- Remote Duo uses real WebRTC video and reliable chunked data transfer; Supabase Realtime carries encrypted signaling only. Both participants must indicate readiness. Host schedules shared capture timestamps; seven clock probes select the lowest RTT offset. Photos and configuration/selection travel through the peer channel. Both sides render host-first pairs in identical order.
+1. In Supabase, open **SQL Editor → New query**. Paste and run [`supabase/migrations/202611150001_session_gallery.sql`](supabase/migrations/202611150001_session_gallery.sql). Run it once. It creates the `photo_creations` table, the private `session-photos` bucket, and ownership policies.
+2. Under **Authentication → Sign In / Providers**, enable **Anonymous Sign-Ins**. This gives each tab an isolated visitor identity without asking visitors to register. Anonymous sign-in abuse protection/CAPTCHA may require an additional site integration; monitor project quotas before opening the site widely.
+3. Add these build environment variables to Cloudflare Pages (and `.env` for local testing):
 
-## Configure Remote Duo
+   ```env
+   VITE_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_YOUR_PUBLIC_KEY
+   VITE_CLOUD_ARCHIVE_ENABLED=true
+   ```
 
-1. Create a Supabase project and enable Realtime Broadcast. Anonymous public Broadcast channels must be allowed; no database tables or user authentication are needed. The app encrypts signaling with AES-GCM using a key derived from the unguessable shared room code and hashes that code for the Broadcast topic. Public channel access does **not** give observers the room secret or photo data.
-2. Copy `.env.example` to `.env`. Set the project URL and public **publishable** key. Never put a secret/service-role key in any `VITE_` variable.
-3. Restart Vite (or rebuild the deployment). Room links use a URL fragment so their secret is not sent as a normal HTTP path or query. Share privately. Codes contain 96 random bits plus a timestamp and expire after an hour. No room record or photograph is stored on Supabase.
-4. For reliable access from restricted networks, configure TURN. Browser-visible TURN credentials should be short-lived credentials issued by your provider, not a long-lived privileged secret. STUN alone cannot connect every network pair.
-5. Host: Remote Duo → Open camera → Create private room → Copy invitation link. Guest opens link, grants camera access, and clicks Join. Each person checks ready; host starts. Each person may independently grant/revoke permission to save. Export stays disabled until both consent and all four selected pairs arrive.
+4. Redeploy/restart. The app displays a permanent-storage notice before uploads/captures. Test with one photo: the gallery should report **Saved to owner’s private storage**. In Supabase, check **Table Editor → photo_creations** and **Storage → session-photos**.
 
-If disconnected, the active countdown is canceled. Both people should click Join / reconnect room using the same code (their existing host/guest roles are retained). This renegotiates the peer connection, while current-tab captures remain in memory. A refresh intentionally discards unsaved remote photographs; rejoin and start a new synchronized session. A canceled/paused session can resume remaining poses with a fresh countdown. Hidden tabs cancel active capture because background browser timing cannot be trusted.
+The public browser key cannot run the SQL migration or enable Anonymous Sign-Ins. Use the dashboard or an authenticated Supabase administration integration for those steps. No secret/service-role key belongs in the frontend.
 
-Protocol references: [Supabase Broadcast](https://supabase.com/docs/guides/realtime/broadcast), [WebRTC peer connections](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection).
+The private bucket contains binary images; the table stores metadata and image paths. Visitors can upload/read/update only within their own authenticated identity. There is no visitor delete policy for permanent backups. The project owner can inspect and delete backups through the Supabase dashboard. Existing unrelated bucket/table policies were not audited by this migration.
 
-## Verify
+## Session gallery behavior
 
-```sh
-npm run lint       # strict TypeScript validation
-npm run test       # film pixels, crop ratios and room expiry
-npm run build      # production bundle
-npm run test:e2e   # installed Chrome: fake browser camera, real canvas/capture/export/IndexedDB
-```
+- Each tab gets a random session ID. Gallery entries survive a refresh and disappear from the visible gallery in a fresh tab. Closing a tab does **not** delete the owner's database copies.
+- Browser tab restoration can restore sessionStorage and its prior gallery. Normal new tabs get an empty gallery. IndexedDB entries from earlier sessions are hidden rather than destructively deleting historical photos; they remain on that browser's disk until browser data is cleared. This is a temporary visible gallery, not a promise of secure disk erasure.
+- Each uploaded/captured Film Studio original saves immediately. The graded/framed result automatically saves after a one-second pause in editing. Exports update the same creation instead of adding duplicates.
+- Local Booth saves each pose immediately and automatically saves the completed strip. Upload **4–8 JPEG/PNG/WebP photos** to create a strip without the camera. Reordering or adjusting the selected four updates the saved strip.
+- Remote Duo photos remain ephemeral until **both people consent to permanent saving to the site owner's storage and downloads**. After consent, originals/paired images and the finished strip save automatically. Revoking consent stops later app saves; it does not erase existing copies or stop screenshots.
+- Each gallery item reports local-only, pending, saved or failed cloud status. Retry failures before closing the tab. The app warns on tab exit while uploads are pending/failed, subject to browser restrictions. It cannot guarantee uploads after a tab/process closes or when offline; wait for successful status. Pending/failed saves are retried on refresh in the same tab.
+- Removing a thumbnail only hides that local item. It does not remove an existing permanent backup. Cloud backups are not publicly browseable or listed in other visitors' galleries.
+- With `VITE_CLOUD_ARCHIVE_ENABLED` missing/false, the app uses the session gallery only and explicitly says cloud saving is not enabled.
 
-Browser tests use Chrome's synthetic camera input. This exercises actual MediaDevices/video/canvas capture without physical camera access. It does not establish real cross-network Remote Duo acceptance. To verify that, configure Supabase and TURN, open two devices on different networks, compare pose times and paired strip order, test disconnect/rejoin, and inspect consent-gated saving. No live Supabase credentials were provided for that test.
+Image uploads are capped at 20 MB per file by the bucket. Full-resolution originals and rendered copies consume Supabase storage; the free tier has finite storage and request quotas. Quota failures are shown and downloads remain available. Very large images can also exceed browser canvas memory.
+
+## Remote Duo
+
+Use the same Supabase URL and publishable key. Under **Realtime → Settings**, allow public Broadcast channels. No photo data travels through public Broadcast: room topics and AES-GCM signaling keys use separate domain-separated derivations, and video/photos use encrypted WebRTC connections.
+
+Host: Photobooth → Remote Duo → Open camera → Create private room → Copy invitation link. Guest opens the HTTPS link, grants camera access and joins. Both mark ready; host starts. Each pose has its own ten-second countdown. The host schedules a shared timestamp; seven clock probes select a low-RTT clock offset. Selection and ordering synchronize through the peer data channel.
+
+Rooms contain 96 random bits plus a timestamp, expire after one hour and put their secret in the URL fragment. Share links privately. Public Broadcast still permits project-quota abuse by people with the public key; client encryption is not server-side rate limiting.
+
+For restricted networks, configure a TURN relay with `VITE_TURN_URL`, `VITE_TURN_USERNAME`, and `VITE_TURN_CREDENTIAL`. These frontend values are visible; use short-lived TURN credentials, never a permanent privileged secret. STUN alone does not connect every pair of networks.
+
+A disconnect cancels active shooting. Both participants can reconnect with the same code and their existing roles. A refreshed host should create a new room and share its link. Hidden tabs cancel countdowns because browser background timing cannot be trusted.
+
+References: [Anonymous Sign-Ins](https://supabase.com/docs/guides/auth/auth-anonymous), [Storage access policies](https://supabase.com/docs/guides/storage/security/access-control), [Realtime Broadcast](https://supabase.com/docs/guides/realtime/broadcast).
 
 ## Cloudflare Pages
 
-Build command: `npm run build`. Output directory: `dist`. Use a current Node release supported by Vite (Node 22.12+). Set the public `VITE_` variables in the build environment before deploying. No Worker, server routes or database migration is required. Camera and encrypted remote signaling require HTTPS outside localhost. The app uses a single HTML route; invitation state is in the URL fragment.
+Connect `victorhuii/vic-cams`, choose **React (Vite)**, branch `main`, build command `npm run build`, output `dist`, root directory blank. Use Node 22.12+ or another release supported by the installed Vite version. Set environment variables before building; changing them requires a redeploy. The site is static; no Cloudflare Worker is required.
 
-## Privacy and limits
+Cloudflare serves `public/_headers`, including the Content Security Policy, camera-only permissions, no-referrer and frame restrictions. Supabase project URLs use the standard `*.supabase.co` domains allowed by that policy; a custom Supabase domain needs a corresponding policy update.
 
-Local storage is per browser/origin; it is not a backup. Clearing browser data, private browsing, quotas, or browser eviction may erase the archive. Keep important downloads. A storage save error is displayed; downloads remain available by retrying after freeing space. Very large camera files can exceed mobile canvas memory; exports currently process on the main thread, so very large images may pause the UI. Grain is deterministic for a given output resolution; preview and full-resolution output have different grain sampling.
+## Features and checks
 
-Film bloom uses a blurred luminance mask with a warm halation tint for Cine; it is not a calibrated optical model. Booth cropping is global for the four selected rows. Changing export mirroring is supported before capture; previously captured originals keep their original orientation. Captions and dates use the current local date. Full physical camera, print color calibration, and two-device network synchronization require manual validation. The privacy note's save consent is an app control, not protection against a participant taking a screenshot.
+Eight original film-inspired canvas grades, non-destructive crop/rotation, six photo frames, PNG/JPEG export, real 4/6/8-pose camera capture, retakes, ordered four-photo selection, shared filters, single/duplicate strips, grid and print output. Film presets are interpretations, not exact commercial emulations. Grain sampling varies with render resolution; large exports process on the main thread. Booth crop adjustments apply globally.
 
-Preview assets: bundled landscape photo from [Unsplash](https://images.unsplash.com/photo-1470252649378-9c29740c9fa8); existing cat photos reused from the provided Mimicams assets. The cat photos are example artwork, never session captures. Typography uses Google Fonts with system fallbacks.
+```sh
+npm run lint
+npm run test
+npm run build
+npm run test:e2e
+```
 
-## Security review
+Chrome tests use a synthetic MediaDevices camera and actual canvas/IndexedDB/export code. Cloud unit tests mock the Supabase SDK to verify private path ownership, metadata writes, anonymous authentication and error propagation; they do not prove live database policies. Live storage/SQL and cross-network Remote Duo require configuration and manual/integration testing against the actual project.
 
-The Supabase publishable key is intentionally included in the browser bundle; `.env` exclusion does not hide `VITE_` values from visitors. Never supply secret/service-role keys or permanent privileged TURN credentials. Room-topic hashes and signaling encryption keys use different domain-separated derivations. Room links grant access and should stay private. Peer photo transfers have bounded chunk counts and concurrent assemblies. Cloudflare Pages serves the security headers in `public/_headers`, including a Content Security Policy.
+## Reference border and assets
 
-Public Supabase Broadcast access still allows project quota abuse by someone with the publishable key; encrypted signaling does not provide server-side rate limiting. The app does not create database tables or buckets. If this project has other tables/buckets, review their RLS and storage policies in Supabase before sharing the site. No dashboard policies or deployed Cloudflare settings were audited from this workspace. Cross-network Remote Duo still needs testing.
+Four-cut recreates the supplied brown LIFEFOURCUTS/인생네컷 reference at 528×1584 per strip. Duplicate columns contain the same four ordered photos. Remote pairs stay together in each duplicated row. Dates use the current browser-local YYYY.MM.DD; print output is 1200×1800.
 
-## Reference four-cut border
+Bundled Noto Sans KR (weight 200) and Roboto are close lettering matches, not verified originals; licenses are in `public/fonts`. Hamu Studio's public site does not provide a complete downloadable frame catalog. Other frame colors are original app templates.
 
-The Four-cut template recreates the user-supplied brown LIFEFOURCUTS/인생네컷 reference at 528×1584 per strip. Two matching strips duplicate the same four ordered photographs in each column; remote photos remain paired within each duplicated row. Date stamps use the browser's current local date as YYYY.MM.DD. Print output is 1200×1800. Setup and final previews share the export renderer.
-
-Korean lettering uses bundled Noto Sans KR Light (weight 200); date/side text uses bundled Roboto. Font licenses are included in public/fonts. These are close matches, not verified original fonts. Hamu Studio's public website (https://hamustudio.com/) does not supply a complete downloadable frame catalog; the existing other color templates are original app designs, not claimed reproductions of Hamu's collection.
+Landscape preview: [Unsplash source](https://images.unsplash.com/photo-1470252649378-9c29740c9fa8). Cat previews reuse the supplied Mimicams assets. Preview artwork is never substituted for captured session photos. UI fonts use Google Fonts with system fallbacks.
