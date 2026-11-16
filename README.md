@@ -110,3 +110,7 @@ The exported photostrip is the central review display. Retake photos stack in on
 Go back to room keeps the existing WebRTC connection, room code and host/guest roles. Either person can return first while their partner finishes editing. The host can begin another round once both are back. Edit last strip reopens the preserved review. Starting the next round creates a fresh round ID and gallery creation; late photos/readiness messages from the previous round are ignored. Existing gallery creations remain saved.
 
 For live privacy, choose Your camera background before creating/joining the room. This overrides the shared room background for that participant and is also available beside the idle camera controls. Your partner receives the composited stream. Photo background in review changes finished photos; it cannot undo an earlier live view or remove original captures already saved in the gallery/cloud.
+
+### Film Studio camera
+
+New Film Studio edits default to a 4:5 photo crop. Existing saved edits retain their chosen ratio. Use camera → Start 7-second timer captures a real camera photo after seven seconds and automatically saves its original and edited creation. Cancel timer or Escape stops the countdown; hiding the tab cancels it too. The live camera viewport follows the selected ratio, while Original shows the native camera framing.

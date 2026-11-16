@@ -12,7 +12,7 @@ export const films:Film[] = [
 ];
 export const defaults:Adjustments={exposure:0,contrast:0,saturation:0,warmth:0,grain:0,fade:0,vignette:0};
 export type Edit = {film:string; intensity:number; adjustments:Adjustments; frame:string; ratio:string; zoom:number; x:number; y:number; rotation:number; thickness:number; paper:string; caption:string; date:boolean};
-export const defaultEdit:Edit={film:'portra',intensity:80,adjustments:{...defaults},frame:'Polaroid',ratio:'Original',zoom:1,x:0,y:0,rotation:0,thickness:1,paper:'#fffdf7',caption:'',date:false};
+export const defaultEdit:Edit={film:'portra',intensity:80,adjustments:{...defaults},frame:'Polaroid',ratio:'4:5',zoom:1,x:0,y:0,rotation:0,thickness:1,paper:'#fffdf7',caption:'',date:false};
 const clamp=(n:number)=>Math.max(0,Math.min(255,n));
 export function noise(i:number){let n=(i+1)*374761393;n=(n^(n>>>13))*1274126177;return ((n^(n>>>16))>>>0)/4294967295-.5;}
 export function gradePixels(data:Uint8ClampedArray,w:number,h:number,film:Film|undefined,intensity:number,a:Adjustments){
