@@ -1,5 +1,5 @@
 import {canvas,renderPhoto,defaultEdit} from '../../lib/imaging/engine';
-export const frames=[{name:'Four-cut',color:'#9e8575',ink:'#fff9ef'},{name:'Classic White',color:'#fffdf7',ink:'#fff9ef'},{name:'Black',color:'#242622',ink:'#fff9ef'},{name:'Cream',color:'#e9dfc9',ink:'#fff9ef'},{name:'Pink',color:'#eac9cb',ink:'#fff9ef'},{name:'Pastel Blue',color:'#cbdfe5',ink:'#fff9ef'},{name:'Retro Film',color:'#b98056',ink:'#fff9ef'}];
+export const frames=[{name:'Four-cut',color:'#9e8575',ink:'#fff9ef'},{name:'Classic White',color:'#fffdf7',ink:'#353535'},{name:'Black',color:'#242622',ink:'#fff9ef'},{name:'Cream',color:'#e9dfc9',ink:'#fff9ef'},{name:'Pink',color:'#eac9cb',ink:'#fff9ef'},{name:'Pastel Blue',color:'#cbdfe5',ink:'#fff9ef'},{name:'Retro Film',color:'#b98056',ink:'#fff9ef'}];
 export const boothFilters=[{name:'Original',film:'none'},{name:'Dreamy White',film:'dreamy'},{name:'Warm Film',film:'portra'},{name:'Soft Pink',film:'fuji'},{name:'Vintage',film:'gold'},{name:'B&W',film:'hp5'},{name:'Cool Pastel',film:'cine'},{name:'Disposable Flash',film:'disposable'}];
 export type BoothSettings={frame:string;layout:string;filter:string;intensity:number;caption:string;date:boolean;zoom:number;x:number;y:number};
 export const boothDefaults:BoothSettings={frame:'Four-cut',layout:'double',filter:'Dreamy White',intensity:65,caption:'',date:true,zoom:1,x:0,y:0};
