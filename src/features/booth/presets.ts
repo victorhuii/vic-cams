@@ -7,6 +7,7 @@ export const referenceFrames:FramePreset[]=[
  {name:'Autumn Bears',color:'#ffde70',ink:'#493c29',style:'autumn'},
  {name:'Black Contact Sheet',color:'#100d0b',ink:'#ffffff',style:'contact'},
  {name:'Pink Six-cut',color:'#e8afb3',ink:'#fff8f1',style:'six',poses:6},
+ {name:'Pink Crumb',color:'#000000',ink:'#ee9cba',style:'crumb',poses:6},
  {name:'Heart Sketch',color:'#ffffff',ink:'#df87ad',style:'hearts',poses:6},
  {name:'Star Buddies',color:'#fff9eb',ink:'#8a7254',style:'stars'},
  {name:'Honey Bears',color:'#f9e8c5',ink:'#8e7451',style:'bears'},
@@ -15,6 +16,7 @@ export const referenceFrames:FramePreset[]=[
 export function presetPoses(name:string){return referenceFrames.find(f=>f.name===name)?.poses??4;}
 export type Window={x:number;y:number;width:number;height:number};
 export function presetGeometry(style:string){
+ if(style==='crumb')return {width:1040,height:1584,windows:Array.from({length:6},(_,i)=>({x:75+(i%2)*455,y:80+Math.floor(i/2)*450,width:434,height:434})),footer:1550};
  if(style==='contact')return {width:1040,height:1584,windows:Array.from({length:4},(_,i)=>({x:38+(i%2)*490,y:96+Math.floor(i/2)*746,width:474,height:650})),footer:1544};
  if(style==='six'||style==='hearts')return {width:1040,height:1584,windows:Array.from({length:6},(_,i)=>({x:style==='six'?88+(i%2)*456:34+(i%2)*492,y:(style==='six'?60:42)+Math.floor(i/2)*(style==='six'?468:434)+(style==='six'&&i%2?34:0),width:style==='six'?400:480,height:style==='six'?458:420})),footer:1540};
  if(style==='borderless')return {width:520,height:1736,windows:Array.from({length:4},(_,i)=>({x:0,y:i*434,width:520,height:434})),footer:0};
@@ -52,6 +54,19 @@ export function borderSvg(frame:FramePreset,thumbnail=false){
   ornaments+=decal(bear,55,345,.75,'#f0ce9d',-12)+decal(bunny,135,345,.75,'#fffef5',12)+decal(bunny,445,675,.8,'#fffef5',-8)+decal(bear,445,1015,.7,'#f3d68e')+decal(bear,320,1435,1,'#f0ce9d',15)+decal(bunny,190,1445,.95,'#fffef5',-9);
   if(style==='doodles')ornaments+=`<g stroke="#444438" stroke-width="3" fill="none">${g.windows.map(w=>`<path d="M${w.x} ${w.y+4}q100-6 180 0t${w.width-180} 0v${w.height-8}q-100 8-180 0t-${w.width-180} 0Z"/>`).join('')}</g>`+decal('<path d="M-34 0q0-45 34-45T34 0ZM-5 0h10l7 26h-24Z"/>',355,80,1,'#e9b37e');
   for(let i=0;i<17;i++)ornaments+=decal(star,i%2?514:9,80+i*89,.5,'#ffe27b',i*37);
+ }else if(style==='crumb'){
+  const envelope='<path d="M-57-31 57-31 57 32-57 32ZM-57-31 0 8 57-31"/>';
+  const cupcake='<path d="M-41 3h82l-10 49h-60ZM-36 0q-14-16 5-23q-8-17 15-22q8-25 23-6q25-4 21 17q25 1 13 24ZM-18 13l3 30M0 13v30M18 13l-3 30"/>';
+  const lock='<path d="M-29-25v-20q0-37 29-37t29 37v20M-40-24q40-22 80 0v65q-40 20-80 0ZM0-9q-17 0-11 16l-7 16h36L11 7q6-16-11-16Z"/>';
+  const balloon='<path d="M0 45C-85-5-52-65 0-31C52-65 85-5 0 45ZM-6 48l12 0-6 9Z M0 57q-20 36 20 58"/>';
+  const bow='<path d="M0 0q-89-65-65-14q12 26 65 14q85-66 61-16Q50 11 0 0ZM-7 5q-35 35-28 70l28-15 13 15q16-40 8-68M-8-5h22v16H-8Z"/>';
+  const cupid='<path d="M-38-17q-36-30-13-49q28-22 39 5q31-4 30 20q-4 26-30 26ZM-33-60q9-12 16 0M-41-26q22 16 48 0M-12-17q49 0 45 28q-8 21-43 7q-23 27-35 7q-8-17 18-25M30-8q43-68 27-73q-25 15-21 63M38 7q39-9 62 9l-29 12-25-9M21 27q33 53 70 49q-20-15-16-37M7 27q-9 44 22 43M-47 9l-28 34M-55 36l-20 7 8-22"/>';
+  const cake='<path d="M-48-20q48-28 96 0v65q-48 28-96 0ZM-48-20q48 26 96 0M-48 2q48 26 96 0M-48 23q48 26 96 0"/>';
+  const sketch=(shape:string,x:number,y:number,scale=1,rotation=0)=>`<g transform="translate(${x} ${y}) rotate(${rotation}) scale(${scale})">${shape}</g>`;
+  ornaments='<defs><filter id="chalk" x="-15%" y="-15%" width="130%" height="130%"><feTurbulence type="fractalNoise" baseFrequency=".11" numOctaves="3" seed="7" result="grain"/><feDisplacementMap in="SourceGraphic" in2="grain" scale="3" xChannelSelector="R" yChannelSelector="G"/></filter></defs><text x="75" y="65" fill="#ee9cba" font-family="Georgia,serif" font-size="48">PHOTO CRUMB</text><g fill="none" stroke="#ee9cba" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" filter="url(#chalk)">';
+  ornaments+=sketch(cupid,900,115,1.1,-12)+sketch(envelope,104,499,1.05,-16)+sketch(balloon,916,510,.9,-10)+sketch(balloon,980,540,.8,16)+sketch(cake,103,943,1.05,-5)+sketch(cupcake,572,980,1.05,-5)+sketch(bow,952,1310,1.1,18)+sketch(lock,105,1480,1.05,-22)+sketch(lock,197,1487,.95,19);
+  for(const [x,y,scale,rotation] of [[65,158,.55,-18],[974,307,.55,20],[541,529,.5,-22],[69,833,.5,-16],[975,840,.5,20],[350,1513,.55,-12],[405,1518,.5,-22],[643,1524,.5,15],[702,1504,.55,18]])ornaments+=sketch(heart,x,y,scale*1.5,rotation);
+  ornaments+='</g>';
  }else if(style==='hearts'){
   for(const [x,y] of [[780,275],[275,715],[780,1150]])for(let i=0;i<3;i++)ornaments+=`<g transform="translate(${x+i*7} ${y+i*7}) scale(${6.7-i*.15} ${8-i*.2})" fill="none" stroke="#ed8fbb" stroke-width=".55" opacity=".85">${heart}</g>`;
  }else if(style==='contact'){

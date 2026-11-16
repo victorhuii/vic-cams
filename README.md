@@ -93,9 +93,9 @@ To rerun the capture check explicitly: `VIC_TEST_LIVE_CAPTURE=1 npm run test:e2e
 
 ## Reference frame presets
 
-Photobooth includes Borderless, Pink Gingham, Cozy Doodles, Autumn Bears, Black Contact Sheet, Pink Six-cut, Heart Sketch, Star Buddies, Honey Bears and Cherry Blossom. These are editable vector recreations inspired by the supplied borders; character illustrations and lettering are approximations. Presets appear in setup and the review Paper menu and are included in previews, downloads and automatic saves. Decoration assets contain no example people or photos.
+Photobooth includes Borderless, Pink Gingham, Cozy Doodles, Autumn Bears, Black Contact Sheet, Pink Six-cut, Heart Sketch, Pink Crumb, Star Buddies, Honey Bears and Cherry Blossom. These are editable vector recreations inspired by the supplied borders; character illustrations and lettering are approximations. Presets appear in setup and the review Paper menu and are included in previews, downloads and automatic saves. Decoration assets contain no example people or photos.
 
-Pink Six-cut and Heart Sketch use six distinct selected poses and automatically require at least six captures. Their default layout is a 2 × 3 sheet. Black Contact Sheet defaults to a 2 × 2 sheet. Other reference borders default to the current strip layout. Matching copies repeat the same selected photos; separate strips use each participant's own photos. Remote Duo shares the preset, capture count and selection with the guest. Refresh both peers after deployment for the updated frame protocol.
+Pink Six-cut, Heart Sketch and Pink Crumb use six distinct selected poses and automatically require at least six captures. Their default layout is a 2 × 3 sheet. Black Contact Sheet defaults to a 2 × 2 sheet. Other reference borders default to the current strip layout. Matching copies repeat the same selected photos; separate strips use each participant's own photos. Remote Duo shares the preset, capture count and selection with the guest. Refresh both peers after deployment for the updated frame protocol.
 
 ## Camera backgrounds and capture screen
 
