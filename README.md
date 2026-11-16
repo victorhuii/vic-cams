@@ -23,7 +23,7 @@ Camera access requires localhost or HTTPS. Film Studio and Local Booth work with
    VITE_CLOUD_ARCHIVE_ENABLED=true
    ```
 
-4. Redeploy/restart. The app displays a permanent-storage notice before uploads/captures. Test with one photo: the gallery should report **Saved to owner’s private storage**. In Supabase, check **Table Editor → photo_creations** and **Storage → session-photos**.
+4. Redeploy/restart. A small storage note appears beside the upload/room controls; the large top banner has been removed. Test with one photo: the gallery should report **Saved to owner’s private storage**. In Supabase, check **Table Editor → photo_creations** and **Storage → session-photos**.
 
 The public browser key cannot run the SQL migration or enable Anonymous Sign-Ins. Use the dashboard or an authenticated Supabase administration integration for those steps. No secret/service-role key belongs in the frontend.
 
@@ -91,7 +91,7 @@ To rerun the capture check explicitly: `VIC_TEST_LIVE_CAPTURE=1 npm run test:e2e
 
 ## Camera backgrounds and capture screen
 
-Before shooting, choose Original, White, Cream, Pink, Blue, Green or a custom solid color under Camera background. The host’s choice synchronizes to the guest. Person segmentation runs locally with MediaPipe’s bundled Selfie Segmenter Landscape model; no external image-processing API is used. The composited canvas stream is sent through WebRTC and used for captures, so the peer preview and saved shot include the background. This option applies to live camera input, not imported photos.
+Before shooting, choose Original, White, Cream, Pink, Blue, Green or a custom solid color under Camera background. The host’s choice synchronizes to the guest. Person segmentation runs locally with MediaPipe’s bundled Selfie Segmenter Landscape model; no external image-processing API is used. The composited canvas stream is sent through WebRTC and used for captures, so the peer preview and saved shot include the background. Camera background applies to live input. In review, Photo background also replaces the background of already-taken or uploaded photos and is included in previews, automatic saves and exports. The selected solid color is composited after film grading, so White remains white.
 
 Model and WASM assets are served from this app; the segmentation SDK is lazy loaded. Deployment headers permit WebAssembly compilation. First use downloads the runtime and may take a moment. Until a replacement is ready, the compositor hides the real background behind a solid color; readiness stays disabled. On failure, choose Original to recover. Hair, motion and lighting can affect cutout quality, and inference has a device-dependent CPU cost. The camera track is composited at up to 20 fps.
 
@@ -102,3 +102,11 @@ Sources: [MediaPipe Image Segmenter](https://developers.google.com/edge/mediapip
 ### Countdown version compatibility
 
 Capture plans carry a protocol identifier, a seven-second duration and every absolute pose deadline. The host uses the same plan it sends; guests apply clock offset compensation to all deadlines. Setup acknowledgements must match the protocol before readiness/capture is allowed. An older peer gets a persistent refresh/rejoin warning instead of running different timing. HTML entry points revalidate cache, while hashed assets remain immutable. After deploying this update, both participants must refresh their tabs and create/join a fresh room.
+
+## Review and returning to a room
+
+The exported photostrip is the central review display. Retake photos stack in one scrollable column and use the same graded image/crop renderer as the exported windows. An enlarged pose appears below the strip; choose Enlarge beside a pose to inspect its filter. On mobile, the strip and large pose come first, followed by editing controls and the pose list.
+
+Go back to room keeps the existing WebRTC connection, room code and host/guest roles. Either person can return first while their partner finishes editing. The host can begin another round once both are back. Edit last strip reopens the preserved review. Starting the next round creates a fresh round ID and gallery creation; late photos/readiness messages from the previous round are ignored. Existing gallery creations remain saved.
+
+For live privacy, choose Your camera background before creating/joining the room. This overrides the shared room background for that participant and is also available beside the idle camera controls. Your partner receives the composited stream. Photo background in review changes finished photos; it cannot undo an earlier live view or remove original captures already saved in the gallery/cloud.

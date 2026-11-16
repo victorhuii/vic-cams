@@ -1,4 +1,4 @@
-export const CAPTURE_PROTOCOL='duo-seven-v2';
+export const CAPTURE_PROTOCOL='duo-seven-review-v3';
 export const COUNTDOWN_MS=7000;
 export const PREVIEW_MS=2000;
 export type CapturePlan={protocol:string;indices:number[];start:number;deadlines:number[];countdownMs:number;previewMs:number};

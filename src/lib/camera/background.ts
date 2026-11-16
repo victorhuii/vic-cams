@@ -19,3 +19,15 @@ export class VirtualCamera {
  private loop=()=>{if(this.stopped)return;try{this.draw();}catch(e){if(!this.failed){this.failed=true;this.onError?.(e);}if(this.color!=='original'){const c=this.canvas.getContext('2d')!;c.fillStyle=this.color;c.fillRect(0,0,this.canvas.width,this.canvas.height);}}this.timer=setTimeout(this.loop,50);};
  close(){if(this.stopped)return;this.stopped=true;clearTimeout(this.timer);this.change++;this.stream?.getTracks().forEach(t=>t.stop());this.raw.getTracks().forEach(t=>t.stop());this.video.pause();this.video.srcObject=null;if(this.segmenter)this.segmenter.close();else void this.model?.then(model=>model.close()).catch(()=>{});}
 }
+
+// Still-photo replacement is separate from the live camera, so originals remain editable.
+let photoModel:Promise<ImageSegmenter>|undefined;
+const photoCache=new Map<string,Promise<string>>();
+export function replacePhotoBackground(src:string,color:string):Promise<string>{
+ if(color==='original')return Promise.resolve(src);if(!validBackground(color))return Promise.reject(new Error('Choose a valid photo background.'));
+ const key=color+'|'+src;const cached=photoCache.get(key);if(cached)return cached;
+ const job=(async()=>{const image=new Image();image.src=src;await image.decode();if(!photoModel)photoModel=(async()=>{const {FilesetResolver,ImageSegmenter}=await import('@mediapipe/tasks-vision');return ImageSegmenter.createFromOptions(await FilesetResolver.forVisionTasks('/wasm'),{baseOptions:{modelAssetPath:'/models/selfie_segmenter_landscape.tflite',delegate:'CPU'},runningMode:'IMAGE',outputConfidenceMasks:true,outputCategoryMask:false});})().catch(e=>{photoModel=undefined;throw e;});const model=await photoModel;
+ const scale=Math.min(1,1600/Math.max(image.naturalWidth,image.naturalHeight)),out=document.createElement('canvas');out.width=Math.round(image.naturalWidth*scale);out.height=Math.round(image.naturalHeight*scale);const ctx=out.getContext('2d')!,person=document.createElement('canvas');person.width=out.width;person.height=out.height;const pc=person.getContext('2d')!;pc.drawImage(image,0,0,out.width,out.height);
+ model.segment(image,result=>{const mask=result.confidenceMasks?.[0];if(!mask)throw new Error('Could not separate the person from the background.');const values=mask.getAsFloat32Array(),alpha=document.createElement('canvas');alpha.width=mask.width;alpha.height=mask.height;const ac=alpha.getContext('2d')!,pixels=ac.createImageData(mask.width,mask.height);for(let i=0;i<values.length;i++){pixels.data[i*4]=255;pixels.data[i*4+1]=255;pixels.data[i*4+2]=255;pixels.data[i*4+3]=personAlpha(values[i]);}ac.putImageData(pixels,0,0);pc.globalCompositeOperation='destination-in';pc.drawImage(alpha,0,0,out.width,out.height);pc.globalCompositeOperation='source-over';});
+ ctx.fillStyle=color;ctx.fillRect(0,0,out.width,out.height);ctx.drawImage(person,0,0);return out.toDataURL('image/png');})();photoCache.set(key,job);if(photoCache.size>12)photoCache.delete(photoCache.keys().next().value!);job.catch(()=>photoCache.delete(key));return job;
+}
