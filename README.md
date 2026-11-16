@@ -91,6 +91,12 @@ Verified with the configured live Supabase Broadcast service and two local headl
 
 To rerun the capture check explicitly: `VIC_TEST_LIVE_CAPTURE=1 npm run test:e2e -- --grep "live remote six-pose"`. This takes about 60 seconds. It captures synthetic peer images into the session gallery and blocks cloud auth/storage requests so synthetic photos are not permanently uploaded. Physical cameras, separate devices, restricted networks and TURN remain separate deployment checks. No additional room SQL migration is required.
 
+## Reference frame presets
+
+Photobooth includes Borderless, Pink Gingham, Cozy Doodles, Autumn Bears, Black Contact Sheet, Pink Six-cut, Heart Sketch, Star Buddies, Honey Bears and Cherry Blossom. These are editable vector recreations inspired by the supplied borders; character illustrations and lettering are approximations. Presets appear in setup and the review Paper menu and are included in previews, downloads and automatic saves. Decoration assets contain no example people or photos.
+
+Pink Six-cut and Heart Sketch use six distinct selected poses and automatically require at least six captures. Their default layout is a 2 × 3 sheet. Black Contact Sheet defaults to a 2 × 2 sheet. Other reference borders default to the current strip layout. Matching copies repeat the same selected photos; separate strips use each participant's own photos. Remote Duo shares the preset, capture count and selection with the guest. Refresh both peers after deployment for the updated frame protocol.
+
 ## Camera backgrounds and capture screen
 
 Before shooting, choose Original, White, Cream, Pink, Blue, Green or a custom solid color under Camera background. The host’s choice synchronizes to the guest. Person segmentation runs locally with MediaPipe’s bundled Selfie Segmenter Landscape model; no external image-processing API is used. The composited canvas stream is sent through WebRTC and used for captures, so the peer preview and saved shot include the background. Camera background applies to live input. In review, Photo background also replaces the background of already-taken or uploaded photos and is included in previews, automatic saves and exports. The selected solid color is composited after film grading, so White remains white.

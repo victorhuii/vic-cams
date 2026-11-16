@@ -70,3 +70,8 @@
 .victor-wordmark{position:relative;width:245px;height:44px;overflow:hidden;flex-shrink:0;letter-spacing:0}.victor-wordmark img{position:absolute;width:272px;max-width:none;height:auto;left:50%;top:50%;transform:translate(-50%,-50%)}@media(max-width:760px){.victor-wordmark{width:160px;height:34px}.victor-wordmark img{width:180px}.site-header{gap:12px}.site-header nav{gap:12px}}@media(max-width:390px){.victor-wordmark{width:142px}.victor-wordmark img{width:160px}}
 
 .film-annotation{display:flex;flex-direction:column;gap:14px;max-width:440px;margin-top:18px}.film-annotation .check{font-size:12px}
+
+/* Frame illustrations use the same vector artwork as exported borders. */
+.frame-grid button>span:has(img){width:50px;height:90px;padding:0;border:0;background:none!important;display:block}
+.frame-grid button>span>img{width:100%;height:100%;object-fit:contain;display:block}
+.frame-grid button:disabled{opacity:.45;cursor:not-allowed}
