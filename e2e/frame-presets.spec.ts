@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 test('reference borders render, export, and six-cut frames select six different poses',async({page})=>{
  await page.goto('/');
  await page.getByRole('navigation').getByRole('button',{name:'Photobooth',exact:true}).click();
+ await page.getByRole('tab',{name:'Bear & Other Designs'}).click();
  await expect(page.getByRole('button',{name:'Cherry Blossom',exact:true})).toBeVisible();
  await page.getByRole('button',{name:'Borderless Duo',exact:true}).click();await expect(page.getByLabel('Layout',{exact:true})).toHaveValue('separate');
  await page.getByRole('button',{name:'Heart Sketch',exact:true}).click();
