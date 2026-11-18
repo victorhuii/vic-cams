@@ -52,7 +52,9 @@ def pixels_for_art(rgb,box,kind):
  keep=np.flatnonzero(areas>=max(250 if kind=='heart' else 15,areas.max()*.035))
  mask=np.isin(labels,keep)
  mask=mask if kind=='heart' else ndi.binary_fill_holes(mask)
- mask=ndi.binary_dilation(mask,iterations=1 if kind=='heart' else 2)
+ # Keep the source-colored silhouette itself. Expanding it captured the old
+ # sample photo/paper around the art, which appeared as a pale halo when the
+ # overlay was placed over a visitor's picture.
  return mask
 
 if args.download:

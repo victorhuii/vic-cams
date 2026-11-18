@@ -16,7 +16,7 @@ test('reference borders render, export, and six-cut frames select six different 
  await expect(page.locator('.review-photos .section-label')).toContainText('6 / 6');
  await page.getByLabel('Paper',{exact:true}).selectOption('Pink Crumb');
  await expect(page.getByRole('button',{name:'Save your strip',exact:true})).toBeEnabled();
- await page.getByLabel('Paper',{exact:true}).selectOption('Sepia Six-cut');await expect(page.getByLabel('Filter',{exact:true})).toHaveValue('Sepia');await expect(page.locator('.review-photos .section-label')).toContainText('6 / 6');await page.getByLabel('Paper',{exact:true}).selectOption('Pink Crumb');
+ await page.getByLabel('Paper',{exact:true}).selectOption('Sepia Six-cut');await expect(page.getByLabel('Filter',{exact:true})).toHaveValue('Sepia');await expect(page.locator('.review-photos .section-label')).toContainText('6 / 6');await page.getByLabel('Paper',{exact:true}).selectOption('Pink Crumb');await expect(page.getByLabel('Filter',{exact:true})).toHaveValue('Dreamy White');
  const download=page.waitForEvent('download');await page.getByRole('button',{name:'Save your strip',exact:true}).click();const png=readFileSync((await (await download).path())!);expect(png.readUInt32BE(16)).toBe(1040);expect(png.readUInt32BE(20)).toBe(1584);
  const results=await page.evaluate(async()=>{
   const path='/src/features/booth/render.ts',presetsPath='/src/features/booth/presets.ts';
