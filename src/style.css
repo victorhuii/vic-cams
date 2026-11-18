@@ -75,3 +75,5 @@
 .frame-grid button>span:has(img){width:50px;height:90px;padding:0;border:0;background:none!important;display:block}
 .frame-grid button>span>img{width:100%;height:100%;object-fit:contain;display:block}
 .frame-grid button:disabled{opacity:.45;cursor:not-allowed}
+
+.frame-category-tabs{display:flex;flex-wrap:wrap;gap:6px}.frame-category-tabs button{padding:10px 12px;border-radius:8px;border:1px solid #d6dbca;font-size:11px}.frame-category-tabs button[aria-selected="true"]{background:#394331;color:#fffdf5;border-color:#394331}.frame-category-tabs+[role="tabpanel"]{margin-top:14px}
