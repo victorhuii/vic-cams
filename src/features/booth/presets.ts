@@ -1,22 +1,31 @@
+import {originalFrameArtwork,type OriginalFrame} from './originalFrames';
 // Editable vector borders: photo windows always contain the visitor's own pictures.
-export type FramePreset={name:string;color:string;ink:string;style?:string;poses?:number;defaultFilter?:string};
+export type FramePreset={name:string;color:string;ink:string;style?:string;poses?:number;defaultFilter?:string;original?:OriginalFrame};
 export const referenceFrames:FramePreset[]=[
  {name:'Borderless',color:'#ffffff',ink:'#333333',style:'borderless'},
  {name:'Borderless Duo',color:'#ffffff',ink:'#333333',style:'duo'},
  {name:'Sepia Six-cut',color:'#595642',ink:'#f4ead1',style:'sepia',poses:6,defaultFilter:'Sepia'},
  {name:'Pink Gingham',color:'#f9d9df',ink:'#4a3837',style:'gingham'},
- {name:'Cozy Doodles',color:'#dbe8e4',ink:'#383c38',style:'doodles'},
+ {name:'Cozy Doodles',original:originalFrameArtwork['cozy-doodles'],color:'#dbe8e4',ink:'#383c38',style:'doodles'},
  {name:'Autumn Bears',color:'#ffde70',ink:'#493c29',style:'autumn'},
  {name:'Black Contact Sheet',color:'#100d0b',ink:'#ffffff',style:'contact'},
- {name:'Pink Six-cut',color:'#e8afb3',ink:'#fff8f1',style:'six',poses:6},
+ {name:'Pink Six-cut',original:originalFrameArtwork['pink-six'],color:'#e8afb3',ink:'#fff8f1',style:'six',poses:6},
  {name:'Pink Crumb',color:'#000000',ink:'#ee9cba',style:'crumb',poses:6},
- {name:'Heart Sketch',color:'#ffffff',ink:'#df87ad',style:'hearts',poses:6},
- {name:'Star Buddies',color:'#fff9eb',ink:'#8a7254',style:'stars'},
- {name:'Honey Bears',color:'#f9e8c5',ink:'#8e7451',style:'bears'},
+ {name:'Heart Sketch',original:originalFrameArtwork['heart-sketch'],color:'#ffffff',ink:'#df87ad',style:'hearts',poses:6},
+ {name:'Star Buddies',original:originalFrameArtwork['star-buddies'],color:'#fff9eb',ink:'#8a7254',style:'stars'},
+ {name:'Honey Bears',original:originalFrameArtwork['honey-bears'],color:'#f9e8c5',ink:'#8e7451',style:'bears'},
+ {name:'Photoism Witch',color:'#000000',ink:'#ffffff',style:'photoism-witch',original:originalFrameArtwork['photoism-witch']},
+ {name:'Photoism Pumpkin',color:'#341152',ink:'#ffffff',style:'photoism-pumpkin',original:originalFrameArtwork['photoism-pumpkin']},
+ {name:'Pancake Bears',color:'#f9e7a2',ink:'#ad945d',style:'pancakes',original:originalFrameArtwork['pancake-bears']},
+ {name:'Love Cats',color:'#f8c9c4',ink:'#fffdf6',style:'love-cats',original:originalFrameArtwork['love-cats']},
+ {name:'Flower Pups',color:'#eaa7a3',ink:'#fffdf6',style:'flower-pups',original:originalFrameArtwork['flower-pups']},
+ {name:'Picnic Bear',color:'#f4c3b7',ink:'#242424',style:'picnic-bear',original:originalFrameArtwork['picnic-bear']},
+ {name:'Cloud Friends 10th',color:'#a0d6e8',ink:'#242424',style:'cloud-friends',original:originalFrameArtwork['cloud-friends']},
  {name:'Cherry Blossom',color:'#fce7e8',ink:'#665d5a',style:'blossom'},
 ];
 export function presetPoses(name:string){return referenceFrames.find(f=>f.name===name)?.poses??4;}
 export type Window={x:number;y:number;width:number;height:number};
+export function frameGeometry(frame:FramePreset){const art=frame.original;if(art)return {width:art.width,height:art.height,windows:art.windows.map(([x,y,width,height])=>({x,y,width,height})),footer:art.datePoint[1]};return presetGeometry(frame.style!);}
 export function presetGeometry(style:string){
  if(style==='duo')return {width:375,height:1364,windows:Array.from({length:4},(_,i)=>({x:0,y:i*341,width:375,height:341})),footer:0};
  if(style==='sepia')return {width:1040,height:1734,windows:Array.from({length:6},(_,i)=>({x:32+(i%2)*488,y:Math.floor(i/2)*578,width:488,height:578})),footer:0};
@@ -87,4 +96,4 @@ export function borderSvg(frame:FramePreset,thumbnail=false){
  }
  return {under:`<svg xmlns="http://www.w3.org/2000/svg" width="${g.width}" height="${g.height}" viewBox="0 0 ${g.width} ${g.height}"><rect width="100%" height="100%" fill="${frame.color}"/>${art}</svg>`,over:`<svg xmlns="http://www.w3.org/2000/svg" width="${g.width}" height="${g.height}" viewBox="0 0 ${g.width} ${g.height}">${ornaments}</svg>`};
 }
-export function frameThumbnail(frame:FramePreset){const g=presetGeometry(frame.style!),layers=borderSvg(frame,true);return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.width} ${g.height}">${layers.under}${layers.over}</svg>`)}`;}
+export function frameThumbnail(frame:FramePreset){if(frame.original)return frame.original.src;const g=presetGeometry(frame.style!),layers=borderSvg(frame,true);return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.width} ${g.height}">${layers.under}${layers.over}</svg>`)}`;}
