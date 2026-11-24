@@ -38,3 +38,5 @@ Evo Fuji NN is bundled with a 33³ LUT and estimated grain 19. It uses the suppl
 ### Fuji NN correction from a real-photo pair
 
 The original cropped-chart extraction produced a green shadow cast. The bundled Fuji NN LUT was replaced by a smooth global RGB response fitted to the supplied IMG_2360.JPG original and IMG_2380.jpg target (converted from Display P3 to sRGB), aligned for crop/scale differences. The revised preset neutralizes near-black shadows, lifts flash highlights and uses estimated grain 22. The color response is a photo-pair calibration, not recovery of Evoto internal settings, and should be checked against further photos before assuming universal accuracy.
+
+Fuji NN grain was subsequently increased from 22 to 26 at the user’s request, retaining the corrected color table.
