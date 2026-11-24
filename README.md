@@ -146,3 +146,5 @@ Uses the CSP-compatible build of [heic-to](https://github.com/hoppergee/heic-to)
 ## Large bottom previews
 
 Planner photo clicks select a large full-image preview above Download all. Previous/Next and numbered selectors browse the current order; selection follows the photo through reordering and falls back when it is removed. Bulk editing has a large preview below the editing controls for checked photos, with the same browsing controls. It renders the current preset/intensity/crop/frame settings without saving or applying them to the batch; Apply to selected remains the explicit processing action. Deselecting all shows an empty selection message. Preview object URLs are released when the selected photo changes or the view closes.
+
+Bottom previews include draggable image thumbnails. Reordering there updates the planner grid or bulk photo order and the ZIP download order. Desktop uses native drag/drop; touch and pen use pointer capture, with horizontal edge scrolling for long strips. Arrow keys on a focused thumbnail also reorder it. Planner grid dragging supports both native desktop drag/drop and touch pointer gestures.
