@@ -26,3 +26,7 @@ Run both Supabase migrations: `202611240001_film_presets.sql` and `202611240002_
 The password is verified server-side and authorizes a one-hour HttpOnly/Secure/SameSite cookie. Password attempts are limited to five per IP per 15 minutes using hashed IP buckets in Supabase. Both creating a preset and importing settings require this access; reading existing presets is public. Anyone with the owner password can create presets. Use the Supabase dashboard to remove unwanted presets.
 
 Supabase stores preset names and numeric/LUT settings only. Normal photo gallery uploads continue to follow the site's existing storage configuration.
+
+## Built-in Evo 90s
+
+The supplied 90s chart extraction is also bundled as **Evo 90s**, available in Film Studio and Polaroid without an import or server setup. It uses the same 33³ LUT and estimated grain 19 as the generated Markdown. Selecting it starts at 100% intensity and clears extra adjustments so the extracted grade is applied directly. Its color/texture matching remains approximate; no independently measured spatial effects are claimed.

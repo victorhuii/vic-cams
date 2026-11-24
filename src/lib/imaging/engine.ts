@@ -1,7 +1,8 @@
+import {evo90s} from './evo90s';
 import type {CustomSettings} from './customSettings';
 import {gradeCustomPixels} from './customGrade';
 export type Adjustments = { exposure:number; contrast:number; saturation:number; warmth:number; grain:number; fade:number; vignette:number };
-export type Film = {id:string; name:string; note:string; color:string; warmth:number; contrast:number; saturation:number; fade:number; grain:number; tint:number; bloom:number; mono?:boolean};
+export type Film = {id:string; name:string; note:string; color:string; warmth:number; contrast:number; saturation:number; fade:number; grain:number; tint:number; bloom:number; mono?:boolean;settings?:CustomSettings};
 export const films:Film[] = [
 {id:'portra',name:'Portra 400',note:'Warm skin · soft highlights',color:'#d2b99b',warmth:9,contrast:-8,saturation:-8,fade:6,grain:8,tint:2,bloom:0},
 {id:'gold',name:'Gold 200',note:'Sun-drenched · nostalgic',color:'#dbb953',warmth:20,contrast:8,saturation:15,fade:4,grain:12,tint:0,bloom:0},
@@ -10,7 +11,8 @@ export const films:Film[] = [
 {id:'cine',name:'Cine 800T',note:'Cool nights · glowing lights',color:'#7d9da6',warmth:-16,contrast:12,saturation:-7,fade:3,grain:17,tint:4,bloom:9},
 {id:'chrome',name:'Classic Chrome',note:'Quiet color · deep shadows',color:'#8d958c',warmth:2,contrast:20,saturation:-28,fade:3,grain:8,tint:-2,bloom:0},
 {id:'dreamy',name:'Dreamy Film',note:'Creamy whites · pink warmth',color:'#ddbac3',warmth:7,contrast:-15,saturation:-10,fade:10,grain:5,tint:6,bloom:12},
-{id:'hp5',name:'Ilford HP5',note:'Organic monochrome · texture',color:'#73736e',warmth:0,contrast:22,saturation:-100,fade:5,grain:24,tint:0,bloom:0}
+{id:'hp5',name:'Ilford HP5',note:'Organic monochrome · texture',color:'#73736e',warmth:0,contrast:22,saturation:-100,fade:5,grain:24,tint:0,bloom:0},
+{id:'evo90s',name:'Evo 90s',note:'Evoto chart colors · estimated film grain',color:'#a77d66',warmth:0,contrast:0,saturation:0,fade:0,grain:0,tint:0,bloom:0,settings:evo90s}
 ];
 export const defaults:Adjustments={exposure:0,contrast:0,saturation:0,warmth:0,grain:0,fade:0,vignette:0};
 export type Edit = {custom?:CustomSettings;film:string; intensity:number; adjustments:Adjustments; frame:string; ratio:string; zoom:number; x:number; y:number; rotation:number; thickness:number; paper:string; caption:string; date:boolean};
@@ -18,6 +20,7 @@ export const defaultEdit:Edit={film:'portra',intensity:80,adjustments:{...defaul
 const clamp=(n:number)=>Math.max(0,Math.min(255,n));
 export function noise(i:number){let n=(i+1)*374761393;n=(n^(n>>>13))*1274126177;return ((n^(n>>>16))>>>0)/4294967295-.5;}
 export function gradePixels(data:Uint8ClampedArray,w:number,h:number,film:Film|undefined,intensity:number,a:Adjustments){
+ if(film?.settings){gradeCustomPixels(data,w,h,film.settings,intensity);gradePixels(data,w,h,undefined,0,a);return;}
  const t=film?intensity/100:0;const c=1+((film?.contrast??0)*t+a.contrast)/100;const sat=1+((film?.saturation??0)*t+a.saturation)/100;const warm=(film?.warmth??0)*t+a.warmth;const fade=((film?.fade??0)*t+a.fade);const grain=(film?.grain??0)*t+a.grain;
  for(let i=0;i<data.length;i+=4){let r=data[i],g=data[i+1],b=data[i+2];const lum=.2126*r+.7152*g+.0722*b;const exp=2**(a.exposure/50);const n=noise(i/4)*grain*(.35+.65*(1-lum/255));const x=(i/4)%w,y=Math.floor(i/4/w);const vig=1-a.vignette/100*.6*Math.min(1,((x/w-.5)**2+(y/h-.5)**2)*2);const tint=(film?.tint??0)*t;
  r=lum+(r-lum)*sat;g=lum+(g-lum)*sat;b=lum+(b-lum)*sat;

@@ -1,3 +1,4 @@
+import {gradeCustomPixels} from '../src/lib/imaging/customGrade';
 import {describe,it,expect} from 'vitest';
 import {gradePixels,films,defaults,noise,ratioValue} from '../src/lib/imaging/engine';
 import {createCode,validCode,signalingSecrets} from '../src/lib/realtime/duo';
@@ -11,3 +12,5 @@ describe('film processing',()=>{
 describe('ephemeral room codes',()=>{it('accepts new random codes and rejects expired, future and malformed codes',()=>{const code=createCode();expect(validCode(code)).toBe(true);expect(validCode(code,Date.now()+3600001)).toBe(false);expect(validCode(code,Date.now()-120000)).toBe(false);expect(validCode('bad!')).toBe(false);expect(createCode()).not.toBe(code);});});
 
 it('public room topic cannot decrypt signaling ciphertext',async()=>{const code=createCode();const a=await signalingSecrets(code),b=await signalingSecrets(code);expect(a.topic).toBe(b.topic);const iv=crypto.getRandomValues(new Uint8Array(12));const encrypted=await crypto.subtle.encrypt({name:'AES-GCM',iv},a.key,new TextEncoder().encode('private offer'));const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},b.key,encrypted);expect(new TextDecoder().decode(plain)).toBe('private offer');const topicKey=await crypto.subtle.importKey('raw',Uint8Array.from(a.topic.match(/../g)!,h=>parseInt(h,16)),'AES-GCM',false,['decrypt']);await expect(crypto.subtle.decrypt({name:'AES-GCM',iv},topicKey,encrypted)).rejects.toThrow();});
+
+it('built-in Evo 90s uses the extracted LUT and grain without another film curve',()=>{const film=films.find(f=>f.id==='evo90s')!;expect(film.name).toBe('Evo 90s');expect(film.settings?.grain).toBe(19);const input=new Uint8ClampedArray([30,90,140,255,210,180,150,128]);const actual=input.slice(),expected=input.slice(),zero=input.slice();gradeCustomPixels(expected,2,1,film.settings!,100);gradePixels(actual,2,1,film,100,defaults);gradePixels(zero,2,1,film,0,defaults);expect(actual).toEqual(expected);expect(actual).not.toEqual(input);expect(zero).toEqual(input);});
