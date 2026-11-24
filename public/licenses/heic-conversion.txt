@@ -1,0 +1,6 @@
+HEIC conversion uses heic-to 1.6.7, by Hopper Gee, distributed under LGPL-3.0.
+Source, build instructions and license: https://github.com/hoppergee/heic-to
+License text: https://www.gnu.org/licenses/lgpl-3.0.html
+The package includes libheif and decoder components; their source/build references
+are available through the upstream project. No upstream source modifications were made.
+The converter is loaded as a separate browser module only when required.
