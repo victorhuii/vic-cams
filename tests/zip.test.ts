@@ -1,0 +1,5 @@
+import {expect,it} from 'vitest';
+import {photoZip} from '../src/lib/imaging/zip';
+it('writes valid ZIP offsets, UTF-8 filenames, stored contents and checksums',async()=>{
+ const zip=await photoZip([{name:'01-café.png',blob:new Blob(['hello'])},{name:'02.png',blob:new Blob(['world'])}]);const bytes=new Uint8Array(await zip.arrayBuffer()),view=new DataView(bytes.buffer);expect(zip.type).toBe('application/zip');expect(view.getUint32(0,true)).toBe(0x04034b50);expect(view.getUint16(6,true)).toBe(0x800);expect(view.getUint32(14,true)).toBe(0x3610a686);const nameLength=view.getUint16(26,true);expect(new TextDecoder().decode(bytes.slice(30,30+nameLength))).toBe('01-café.png');expect(new TextDecoder().decode(bytes.slice(30+nameLength,35+nameLength))).toBe('hello');const end=bytes.length-22;expect(view.getUint32(end,true)).toBe(0x06054b50);expect(view.getUint16(end+10,true)).toBe(2);const central=view.getUint32(end+16,true);expect(view.getUint32(central,true)).toBe(0x02014b50);expect(view.getUint32(central+42,true)).toBe(0);expect(view.getUint32(central+46+nameLength+42,true)).toBe(35+nameLength);
+});
