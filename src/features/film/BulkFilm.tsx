@@ -1,5 +1,7 @@
+import {createPortal} from 'react-dom';
+import {PhotoPreview,type PreviewPhoto} from '../../components/PhotoPreview';
 import {normalizePhoto,photoAccept} from '../../lib/imaging/uploads';
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useRef,useState} from 'react';
 import {blobOf,download,fileData,films,renderPhoto,type Edit} from '../../lib/imaging/engine';
 import {photoZip} from '../../lib/imaging/zip';
 import {save} from '../../lib/storage/archive';
@@ -8,6 +10,8 @@ export function BulkFilm({files,edit,format,onClose,notify}:{files:File[];edit:E
  const [items,setItems]=useState<Item[]>([]),[loading,setLoading]=useState(false),[working,setWorking]=useState(false),[zipping,setZipping]=useState(false),[progress,setProgress]=useState('');
  const input=useRef<HTMLInputElement>(null),epoch=useRef(0),alive=useRef(true),cancel=useRef(false);
  useEffect(()=>{alive.current=true;const id=++epoch.current;void add(files,id);return()=>{alive.current=false;epoch.current++;cancel.current=true;};},[files]);
+ const [previewHost,setPreviewHost]=useState<HTMLElement|null>(null);useEffect(()=>{setPreviewHost(document.getElementById('film-bulk-preview'));},[]);
+ const renderPreview=useCallback(async(photo:PreviewPhoto)=>(await renderPhoto(photo.source as string,edit,1200)).toDataURL(),[edit]);
  const selected=items.filter(i=>i.selected);const locked=loading||working||zipping;
  async function add(incoming:File[],id=epoch.current){
   setLoading(true);let skipped=0;const capacity=30-items.length;
@@ -38,5 +42,5 @@ export function BulkFilm({files,edit,format,onClose,notify}:{files:File[];edit:E
  <div className="bulk-grid">{items.map((item,index)=><article className={`bulk-photo ${item.selected?'selected':''}`} key={item.id}><label><input type="checkbox" aria-label={`Select photo ${index+1}: ${item.name}`} disabled={locked} checked={item.selected} onChange={()=>setItems(previous=>previous.map(i=>i.id===item.id?{...i,selected:!i.selected}:i))}/><img src={item.thumb} alt={item.name}/><span>{item.name}</span></label><small>{item.applied||'Original'}</small>{item.error&&<p className="preset-error" role="alert">{item.error}</p>}</article>)}</div>
  <p className="muted">Choose a preset below, then apply it to your selected photos. Current crop and frame settings are included.</p>
  <div className="bulk-actions"><button className="button dark" disabled={locked||!selected.length} onClick={()=>void apply()}>Apply to selected ({selected.length})</button>{working&&<button className="text-button" onClick={()=>{cancel.current=true;}}>Cancel batch</button>}<button className="button" disabled={locked||!selected.length||selected.some(i=>!i.output)} onClick={()=>void exportSelected()}>{zipping?'Preparing ZIP…':'Download selected (.zip)'}</button></div>
- <p className="muted" role="status">{loading?'Loading photos…':progress}</p></div>;
+ <p className="muted" role="status">{loading?'Loading photos…':progress}</p>{previewHost&&createPortal(<PhotoPreview photos={selected.map(item=>({id:item.id,name:item.name,source:item.source}))} render={renderPreview} label="Selected photo preview"/>,previewHost)}</div>;
 }
