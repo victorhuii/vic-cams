@@ -10,3 +10,8 @@ playwright-report/
 .enc
 *.pem
 *.key
+
+# Cloudflare local server secrets
+.dev.vars
+.dev.vars.*
+.wrangler/

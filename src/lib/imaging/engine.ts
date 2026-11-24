@@ -1,3 +1,5 @@
+import type {CustomSettings} from './customSettings';
+import {gradeCustomPixels} from './customGrade';
 export type Adjustments = { exposure:number; contrast:number; saturation:number; warmth:number; grain:number; fade:number; vignette:number };
 export type Film = {id:string; name:string; note:string; color:string; warmth:number; contrast:number; saturation:number; fade:number; grain:number; tint:number; bloom:number; mono?:boolean};
 export const films:Film[] = [
@@ -11,7 +13,7 @@ export const films:Film[] = [
 {id:'hp5',name:'Ilford HP5',note:'Organic monochrome · texture',color:'#73736e',warmth:0,contrast:22,saturation:-100,fade:5,grain:24,tint:0,bloom:0}
 ];
 export const defaults:Adjustments={exposure:0,contrast:0,saturation:0,warmth:0,grain:0,fade:0,vignette:0};
-export type Edit = {film:string; intensity:number; adjustments:Adjustments; frame:string; ratio:string; zoom:number; x:number; y:number; rotation:number; thickness:number; paper:string; caption:string; date:boolean};
+export type Edit = {custom?:CustomSettings;film:string; intensity:number; adjustments:Adjustments; frame:string; ratio:string; zoom:number; x:number; y:number; rotation:number; thickness:number; paper:string; caption:string; date:boolean};
 export const defaultEdit:Edit={film:'portra',intensity:80,adjustments:{...defaults},frame:'Polaroid',ratio:'4:5',zoom:1,x:0,y:0,rotation:0,thickness:1,paper:'#fffdf7',caption:'',date:true};
 const clamp=(n:number)=>Math.max(0,Math.min(255,n));
 export function noise(i:number){let n=(i+1)*374761393;n=(n^(n>>>13))*1274126177;return ((n^(n>>>16))>>>0)/4294967295-.5;}
@@ -31,7 +33,7 @@ export function ratioValue(ratio:string,original:number){if(ratio==='Original')r
 export async function renderPhoto(src:string,edit:Edit,max=2400,before=false){
  const image=await loadImage(src);const rotated=canvas(edit.rotation%180?image.naturalHeight:image.naturalWidth,edit.rotation%180?image.naturalWidth:image.naturalHeight);const rc=rotated.getContext('2d')!;rc.translate(rotated.width/2,rotated.height/2);rc.rotate(edit.rotation*Math.PI/180);rc.drawImage(image,-image.naturalWidth/2,-image.naturalHeight/2);
  const ratio=ratioValue(edit.ratio,rotated.width/rotated.height);let w=rotated.width,h=w/ratio;if(h>rotated.height){h=rotated.height;w=h*ratio;}const scale=Math.min(1,max/Math.max(w,h));const photo=canvas(w*scale,h*scale);const ctx=photo.getContext('2d')!;const sw=w/edit.zoom,sh=h/edit.zoom;const sx=(rotated.width-sw)/2+edit.x/100*(rotated.width-sw)/2,sy=(rotated.height-sh)/2+edit.y/100*(rotated.height-sh)/2;ctx.drawImage(rotated,sx,sy,sw,sh,0,0,photo.width,photo.height);
- if(!before){const pixels=ctx.getImageData(0,0,photo.width,photo.height);gradePixels(pixels.data,photo.width,photo.height,films.find(f=>f.id===edit.film),edit.intensity,edit.adjustments);ctx.putImageData(pixels,0,0);}
+ if(!before){const pixels=ctx.getImageData(0,0,photo.width,photo.height);if(edit.custom&&edit.film.startsWith('custom:'))gradeCustomPixels(pixels.data,photo.width,photo.height,edit.custom,edit.intensity);gradePixels(pixels.data,photo.width,photo.height,films.find(f=>f.id===edit.film),edit.intensity,edit.adjustments);ctx.putImageData(pixels,0,0);}
  const glow=before?0:(films.find(f=>f.id===edit.film)?.bloom??0)*edit.intensity/100;
  if(glow>0){const mask=canvas(photo.width,photo.height),mc=mask.getContext('2d')!;const highlights=ctx.getImageData(0,0,photo.width,photo.height);for(let i=0;i<highlights.data.length;i+=4){const l=.2126*highlights.data[i]+.7152*highlights.data[i+1]+.0722*highlights.data[i+2];highlights.data[i+3]=Math.max(0,l-185)*2;if(edit.film==='cine'){highlights.data[i]=255;highlights.data[i+1]=85;highlights.data[i+2]=35;}}mc.putImageData(highlights,0,0);ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=glow/60;ctx.filter=`blur(${Math.max(1,Math.max(photo.width,photo.height)*.006)}px)`;ctx.drawImage(mask,0,0);ctx.restore();}
  if(edit.frame==='No Border')return photo;

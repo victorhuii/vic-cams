@@ -60,7 +60,7 @@ References: [Anonymous Sign-Ins](https://supabase.com/docs/guides/auth/auth-anon
 
 ## Cloudflare Pages
 
-Connect `victorhuii/vic-cams`, choose **React (Vite)**, branch `main`, build command `npm run build`, output `dist`, root directory blank. Use Node 22.12+ or another release supported by the installed Vite version. Set environment variables before building; changing them requires a redeploy. The site is static; no Cloudflare Worker is required.
+Connect `victorhuii/vic-cams`, choose **React (Vite)**, branch `main`, build command `npm run build`, output `dist`, root directory blank. Use Node 22.12+ or another release supported by the installed Vite version. Set environment variables before building; changing them requires a redeploy. Built-in editing is static. Shared Custom film presets use the bundled Cloudflare Pages Functions; see [Custom preset setup](docs/custom-film-presets.md).
 
 Cloudflare serves `public/_headers`, including the Content Security Policy, camera-only permissions, no-referrer and frame restrictions. Supabase project URLs use the standard `*.supabase.co` domains allowed by that policy; a custom Supabase domain needs a corresponding policy update.
 
@@ -122,3 +122,7 @@ For live privacy, choose Your camera background before creating/joining the room
 ### Film Studio camera
 
 New Film Studio edits default to a 4:5 photo crop. Existing saved edits retain their chosen ratio. Use camera → Start 7-second timer captures a real camera photo after seven seconds and automatically saves its original and edited creation. Cancel timer or Escape stops the countdown; hiding the tab cancels it too. The live camera viewport follows the selected ratio, while Original shows the native camera framing.
+
+## Film simulation and shared custom presets
+
+Film Studio now separates Film simulation and Polaroid into tabs. Custom analyzes an Original/Goal image pair with OpenAI, ignores watermarks/text (with optional marked exclusions), previews a numeric canvas grade, and publishes named settings to Supabase for everyone. No image generation is used. Server credentials, a migration and Turnstile setup are required before replication works: [setup and verification](docs/custom-film-presets.md).
