@@ -83,3 +83,4 @@
 @media(max-width:600px){.custom-preset{padding:16px}.reference-pair{grid-template-columns:1fr;gap:22px}.reference-image img{max-height:400px;object-fit:fill}.reference-image{width:100%}.film-tabs{max-width:none}.film-tabs button{padding:12px;font-size:13px}.preset-actions{flex-wrap:wrap}}
 
 .preset-password{display:flex;flex-direction:column;gap:18px;max-width:420px}.preset-password label{font-size:14px}.preset-password>.button{align-self:flex-start}
+.custom-preset textarea{width:100%;min-height:250px;resize:vertical;border:1px solid var(--line);border-radius:8px;padding:14px;background:#fffdf7;color:var(--ink);font:13px/1.6 monospace;margin-top:15px}
