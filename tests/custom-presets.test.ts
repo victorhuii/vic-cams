@@ -1,7 +1,7 @@
 import {afterEach,describe,expect,it,vi} from 'vitest';
 import {gradeCustomPixels} from '../src/lib/imaging/customGrade';
 import {neutralSettings,parseRegions,parseSettings} from '../src/lib/imaging/customSettings';
-import {readDraft,signDraft,type Env} from '../functions/_lib/presets';
+import {db,readDraft,signDraft,type Env} from '../functions/_lib/presets';
 import {onRequestPost as replicate} from '../functions/api/replicate-preset';
 import {onRequestPost as publish} from '../functions/api/film-presets';
 const env:Env={OPENAI_API_KEY:'test-only-fake-key',SUPABASE_URL:'https://test.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'test-only-fake-service-key',TURNSTILE_SECRET_KEY:'test-secret',TURNSTILE_SITE_KEY:'test-site'};
@@ -25,3 +25,11 @@ it('blocks paid calls when verification fails or the daily quota is full',async(
 });
 it('publishes only validated signed settings and never uploads reference images',async()=>{const ticket=await signDraft(env,neutralSettings);const fetcher=vi.fn(async(_url:string,init:RequestInit)=>{const row=JSON.parse(init.body as string);expect(Object.keys(row).sort()).toEqual(['id','name','settings']);expect(row.name).toBe('Sunday film');return Response.json([row]);});vi.stubGlobal('fetch',fetcher);const response=await publish({request:request('/api/film-presets',{ticket,name:' Sunday film '}),env});expect(response.status).toBe(200);expect(fetcher).toHaveBeenCalledTimes(1);expect((await publish({request:request('/api/film-presets',{ticket:'forged',name:'Bad'}),env})).status).toBe(400);expect(fetcher).toHaveBeenCalledTimes(1);});
 it('rejects cross-origin calls before database writes',async()=>{const req=new Request('https://studio.example/api/film-presets',{method:'POST',headers:{Origin:'https://attacker.example','Content-Type':'application/json'},body:'{}'});expect((await publish({request:req,env})).status).toBe(403);});
+
+it('uses modern secret keys only as apikey and keeps legacy JWT compatibility',async()=>{
+ const fetcher=vi.fn(async()=>Response.json([]));vi.stubGlobal('fetch',fetcher);
+ await db({...env,SUPABASE_SECRET_KEY:'sb_secret_test-only'},'film_presets');
+ let headers=(fetcher.mock.calls as unknown as [string,RequestInit][])[0][1].headers as Headers;expect(headers.get('apikey')).toBe('sb_secret_test-only');expect(headers.has('Authorization')).toBe(false);
+ await db(env,'film_presets');headers=(fetcher.mock.calls as unknown as [string,RequestInit][])[1][1].headers as Headers;expect(headers.get('Authorization')).toBe(`Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`);
+ const modern={...env,SUPABASE_SECRET_KEY:'sb_secret_test-only'};expect((await readDraft(modern,await signDraft(modern,neutralSettings))).settings).toEqual(neutralSettings);
+});

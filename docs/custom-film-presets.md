@@ -13,14 +13,14 @@ Choose **Custom**, upload **Original** and **Goal**, then **Replicate**. The ser
    | Name | Value | Secret? |
    | --- | --- | --- |
    | `SUPABASE_URL` | Your existing `https://…supabase.co` URL, without backslashes | No |
-   | `SUPABASE_SERVICE_ROLE_KEY` | Supabase server service-role key | **Yes** |
+   | `SUPABASE_SECRET_KEY` | Supabase Secret key beginning `sb_secret_` | **Yes** |
    | `OPENAI_API_KEY` | OpenAI project API key with API access/billing | **Yes** |
    | `TURNSTILE_SITE_KEY` | Turnstile widget site key | No |
    | `TURNSTILE_SECRET_KEY` | Turnstile widget secret | **Yes** |
    | `PRESET_DAILY_LIMIT` | Optional: `20` by default, maximum `1000` | No |
    | `OPENAI_PRESET_MODEL` | Optional: `gpt-4.1-mini` by default; must support image inputs and strict structured outputs | No |
 
-   **Never add a `VITE_` prefix to the server secrets.** The existing public `VITE_SUPABASE_*` variables for Remote Duo/photo saves stay as they are. A Supabase publishable key cannot replace the service-role key here. OpenAI API usage is separately billed; configure the project's API spending controls before enabling public replication.
+   **Never add a `VITE_` prefix to the server secrets.** The existing public `VITE_SUPABASE_*` variables for Remote Duo/photo saves stay as they are. Use the Secret key, not the Publishable key. The older `SUPABASE_SERVICE_ROLE_KEY` variable is still accepted for existing legacy configurations. OpenAI API usage is separately billed; configure the project's API spending controls before enabling public replication.
 4. Redeploy from GitHub with the existing `npm run build` / `dist` settings. Cloudflare Pages automatically compiles the root `functions/` directory. This feature needs Pages Functions; uploading only `dist` as static files does not deploy the API. `public/_routes.json` sends only `/api/*` to functions.
 5. Test Custom with two non-private sample photos. Save a unique preset name, then open the site in another browser. The named preset should appear there. In Supabase, the numeric settings are under **Table Editor → film_presets**.
 

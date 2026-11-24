@@ -1,10 +1,11 @@
 import {parseSettings,type CustomSettings} from '../../src/lib/imaging/customSettings';
-export type Env={OPENAI_API_KEY?:string;OPENAI_PRESET_MODEL?:string;SUPABASE_URL?:string;SUPABASE_SERVICE_ROLE_KEY?:string;TURNSTILE_SITE_KEY?:string;TURNSTILE_SECRET_KEY?:string;PRESET_DAILY_LIMIT?:string};
+export type Env={OPENAI_API_KEY?:string;OPENAI_PRESET_MODEL?:string;SUPABASE_URL?:string;SUPABASE_SECRET_KEY?:string;SUPABASE_SERVICE_ROLE_KEY?:string;TURNSTILE_SITE_KEY?:string;TURNSTILE_SECRET_KEY?:string;PRESET_DAILY_LIMIT?:string};
 export type Context={request:Request;env:Env};
 export class HttpError extends Error {constructor(public status:number,message:string){super(message);}}
 export function json(data:unknown,status=200){return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});}
 export function failure(e:unknown){return json({error:e instanceof HttpError?e.message:'The preset service is unavailable. Please try again.'},e instanceof HttpError?e.status:502);}
-export function databaseReady(env:Env){return !!env.SUPABASE_URL&&!!env.SUPABASE_SERVICE_ROLE_KEY;}
+function serverKey(env:Env){return env.SUPABASE_SECRET_KEY||env.SUPABASE_SERVICE_ROLE_KEY;}
+export function databaseReady(env:Env){return !!env.SUPABASE_URL&&!!serverKey(env);}
 export function replicationReady(env:Env){return databaseReady(env)&&!!env.OPENAI_API_KEY&&!!env.TURNSTILE_SECRET_KEY&&!!env.TURNSTILE_SITE_KEY;}
 export async function body(request:Request,max:number){
  if(request.headers.get('origin')!==new URL(request.url).origin)throw new HttpError(403,'Please use the preset editor on this site.');
@@ -17,7 +18,10 @@ export async function body(request:Request,max:number){
 export async function db(env:Env,path:string,init:RequestInit={}){
  if(!databaseReady(env))throw new HttpError(503,'Shared presets need server setup.');
  const url=new URL(env.SUPABASE_URL!);if(url.protocol!=='https:'||!url.hostname.endsWith('.supabase.co'))throw new HttpError(503,'Preset database is not configured correctly.');
- return fetch(`${url.origin}/rest/v1/${path}`,{...init,headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY!,Authorization:`Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,'Content-Type':'application/json',...init.headers},signal:AbortSignal.timeout(15000)});
+ const key=serverKey(env)!;const headers=new Headers(init.headers);headers.set('apikey',key);headers.set('Content-Type','application/json');
+ // Opaque sb_secret_ keys are API keys, not JWT bearer tokens.
+ if(key.startsWith('sb_secret_'))headers.delete('Authorization');else headers.set('Authorization',`Bearer ${key}`);
+ return fetch(`${url.origin}/rest/v1/${path}`,{...init,headers,signal:AbortSignal.timeout(15000)});
 }
 export async function verifyHuman(request:Request,env:Env,token:unknown){
  if(typeof token!=='string'||token.length<1||token.length>2048)throw new HttpError(400,'Complete the verification and try again.');
@@ -26,7 +30,7 @@ export async function verifyHuman(request:Request,env:Env,token:unknown){
  if(!response.ok||!result.success||result.hostname!==new URL(request.url).hostname||result.action!=='replicate-preset')throw new HttpError(403,'Verification expired. Please verify again.');
 }
 export type Draft={id:string;expires:number;settings:CustomSettings};
-async function signingKey(env:Env){return crypto.subtle.importKey('raw',new TextEncoder().encode(`victor-film-preset-v1:${env.SUPABASE_SERVICE_ROLE_KEY}`),{name:'HMAC',hash:'SHA-256'},false,['sign','verify']);}
+async function signingKey(env:Env){return crypto.subtle.importKey('raw',new TextEncoder().encode(`victor-film-preset-v1:${serverKey(env)}`),{name:'HMAC',hash:'SHA-256'},false,['sign','verify']);}
 const hex=(value:ArrayBuffer)=>Array.from(new Uint8Array(value),n=>n.toString(16).padStart(2,'0')).join('');
 export async function signDraft(env:Env,settings:CustomSettings){const draft:Draft={id:crypto.randomUUID(),expires:Date.now()+3600000,settings};const payload=btoa(JSON.stringify(draft));const signature=hex(await crypto.subtle.sign('HMAC',await signingKey(env),new TextEncoder().encode(payload)));return `${payload}.${signature}`;}
 export async function readDraft(env:Env,ticket:unknown){
