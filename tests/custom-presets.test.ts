@@ -1,11 +1,15 @@
+import {createOwnerCookie} from '../functions/_lib/presetAccess';
+import {onRequestPost as unlock} from '../functions/api/preset-access';
+import {onRequestGet as sharedPresets} from '../functions/api/film-presets';
 import {afterEach,describe,expect,it,vi} from 'vitest';
 import {gradeCustomPixels} from '../src/lib/imaging/customGrade';
 import {neutralSettings,parseRegions,parseSettings} from '../src/lib/imaging/customSettings';
 import {db,readDraft,signDraft,type Env} from '../functions/_lib/presets';
 import {onRequestPost as replicate} from '../functions/api/replicate-preset';
 import {onRequestPost as publish} from '../functions/api/film-presets';
-const env:Env={OPENAI_API_KEY:'test-only-fake-key',SUPABASE_URL:'https://test.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'test-only-fake-service-key',TURNSTILE_SECRET_KEY:'test-secret',TURNSTILE_SITE_KEY:'test-site'};
+const env:Env={CUSTOM_PRESET_PASSWORD:'test-owner-password',OPENAI_API_KEY:'test-only-fake-key',SUPABASE_URL:'https://test.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'test-only-fake-service-key',TURNSTILE_SECRET_KEY:'test-secret',TURNSTILE_SITE_KEY:'test-site'};
 const request=(path:string,value:unknown)=>new Request(`https://studio.example${path}`,{method:'POST',headers:{Origin:'https://studio.example','Content-Type':'application/json'},body:JSON.stringify(value)});
+async function ownerRequest(path:string,value:unknown){const req=request(path,value);req.headers.set('Cookie',(await createOwnerCookie(env)).split(';')[0]);return req;}
 const input={original:'data:image/jpeg;base64,AA==',goal:'data:image/jpeg;base64,AA==',token:'verified-token',excludedRegions:[{x:.7,y:.8,width:.2,height:.1}]};
 afterEach(()=>vi.unstubAllGlobals());
 describe('numeric custom grades',()=>{
@@ -17,14 +21,14 @@ it('signed drafts reject changes and expired tickets',async()=>{const ticket=awa
 it('analyzes two images with watermark exclusions and only returns settings, never image generation',async()=>{
  let sent:Record<string,any>|undefined;
  vi.stubGlobal('fetch',vi.fn(async(url:string,init:RequestInit)=>{if(url.includes('siteverify'))return Response.json({success:true,hostname:'studio.example',action:'replicate-preset'});if(url.includes('reserve_film_replication'))return Response.json(true);if(url.includes('api.openai.com')){sent=JSON.parse(init.body as string);return Response.json({status:'completed',output:[{content:[{type:'output_text',text:JSON.stringify({usable:true,note:'Watermark ignored; approximate color match.',settings:{...neutralSettings,warmth:14}})}]}]});}throw new Error('Unexpected endpoint');}));
- const response=await replicate({request:request('/api/replicate-preset',input),env});expect(response.status).toBe(200);const result=await response.json() as any;expect(result.settings.warmth).toBe(14);expect((await readDraft(env,result.ticket)).settings).toEqual(result.settings);expect(sent?.store).toBe(false);expect(sent?.tools).toBeUndefined();expect(sent?.instructions).toContain('Do not interpret white lettering as lifted whites');expect(sent?.input[0].content[0].text).toContain('"x":0.7');expect(sent?.input[0].content.filter((c:any)=>c.type==='input_image')).toHaveLength(2);
+ const response=await replicate({request:await ownerRequest('/api/replicate-preset',input),env});expect(response.status).toBe(200);const result=await response.json() as any;expect(result.settings.warmth).toBe(14);expect((await readDraft(env,result.ticket)).settings).toEqual(result.settings);expect(sent?.store).toBe(false);expect(sent?.tools).toBeUndefined();expect(sent?.instructions).toContain('Do not interpret white lettering as lifted whites');expect(sent?.input[0].content[0].text).toContain('"x":0.7');expect(sent?.input[0].content.filter((c:any)=>c.type==='input_image')).toHaveLength(2);
 });
 it('blocks paid calls when verification fails or the daily quota is full',async()=>{
- const fetcher=vi.fn(async(url:string)=>{if(url.includes('siteverify'))return Response.json({success:true,hostname:'studio.example',action:'replicate-preset'});if(url.includes('reserve_film_replication'))return Response.json(false);throw new Error('Paid call should not run');});vi.stubGlobal('fetch',fetcher);expect((await replicate({request:request('/api/replicate-preset',input),env})).status).toBe(429);expect(fetcher).toHaveBeenCalledTimes(2);
- fetcher.mockImplementation(async()=>Response.json({success:true,hostname:'attacker.example',action:'replicate-preset'}));expect((await replicate({request:request('/api/replicate-preset',input),env})).status).toBe(403);
+ const fetcher=vi.fn(async(url:string)=>{if(url.includes('siteverify'))return Response.json({success:true,hostname:'studio.example',action:'replicate-preset'});if(url.includes('reserve_film_replication'))return Response.json(false);throw new Error('Paid call should not run');});vi.stubGlobal('fetch',fetcher);expect((await replicate({request:await ownerRequest('/api/replicate-preset',input),env})).status).toBe(429);expect(fetcher).toHaveBeenCalledTimes(2);
+ fetcher.mockImplementation(async()=>Response.json({success:true,hostname:'attacker.example',action:'replicate-preset'}));expect((await replicate({request:await ownerRequest('/api/replicate-preset',input),env})).status).toBe(403);
 });
-it('publishes only validated signed settings and never uploads reference images',async()=>{const ticket=await signDraft(env,neutralSettings);const fetcher=vi.fn(async(_url:string,init:RequestInit)=>{const row=JSON.parse(init.body as string);expect(Object.keys(row).sort()).toEqual(['id','name','settings']);expect(row.name).toBe('Sunday film');return Response.json([row]);});vi.stubGlobal('fetch',fetcher);const response=await publish({request:request('/api/film-presets',{ticket,name:' Sunday film '}),env});expect(response.status).toBe(200);expect(fetcher).toHaveBeenCalledTimes(1);expect((await publish({request:request('/api/film-presets',{ticket:'forged',name:'Bad'}),env})).status).toBe(400);expect(fetcher).toHaveBeenCalledTimes(1);});
-it('rejects cross-origin calls before database writes',async()=>{const req=new Request('https://studio.example/api/film-presets',{method:'POST',headers:{Origin:'https://attacker.example','Content-Type':'application/json'},body:'{}'});expect((await publish({request:req,env})).status).toBe(403);});
+it('publishes only validated signed settings and never uploads reference images',async()=>{const ticket=await signDraft(env,neutralSettings);const fetcher=vi.fn(async(_url:string,init:RequestInit)=>{const row=JSON.parse(init.body as string);expect(Object.keys(row).sort()).toEqual(['id','name','settings']);expect(row.name).toBe('Sunday film');return Response.json([row]);});vi.stubGlobal('fetch',fetcher);const response=await publish({request:await ownerRequest('/api/film-presets',{ticket,name:' Sunday film '}),env});expect(response.status).toBe(200);expect(fetcher).toHaveBeenCalledTimes(1);expect((await publish({request:await ownerRequest('/api/film-presets',{ticket:'forged',name:'Bad'}),env})).status).toBe(400);expect(fetcher).toHaveBeenCalledTimes(1);});
+it('rejects cross-origin calls before database writes',async()=>{const req=new Request('https://studio.example/api/film-presets',{method:'POST',headers:{Origin:'https://attacker.example','Content-Type':'application/json'},body:'{}'});req.headers.set('Cookie',(await createOwnerCookie(env)).split(';')[0]);expect((await publish({request:req,env})).status).toBe(403);});
 
 it('uses modern secret keys only as apikey and keeps legacy JWT compatibility',async()=>{
  const fetcher=vi.fn(async()=>Response.json([]));vi.stubGlobal('fetch',fetcher);
@@ -32,4 +36,31 @@ it('uses modern secret keys only as apikey and keeps legacy JWT compatibility',a
  let headers=(fetcher.mock.calls as unknown as [string,RequestInit][])[0][1].headers as Headers;expect(headers.get('apikey')).toBe('sb_secret_test-only');expect(headers.has('Authorization')).toBe(false);
  await db(env,'film_presets');headers=(fetcher.mock.calls as unknown as [string,RequestInit][])[1][1].headers as Headers;expect(headers.get('Authorization')).toBe(`Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`);
  const modern={...env,SUPABASE_SECRET_KEY:'sb_secret_test-only'};expect((await readDraft(modern,await signDraft(modern,neutralSettings))).settings).toEqual(neutralSettings);
+});
+
+it('blocks direct replicate and publish calls without owner access before any upstream calls',async()=>{
+ const fetcher=vi.fn();vi.stubGlobal('fetch',fetcher);
+ expect((await replicate({request:request('/api/replicate-preset',input),env})).status).toBe(401);
+ expect((await publish({request:request('/api/film-presets',{name:'Unwanted',ticket:await signDraft(env,neutralSettings)}),env})).status).toBe(401);
+ const forged=request('/api/film-presets',{});forged.headers.set('Cookie','victor_preset_owner=forged');expect((await publish({request:forged,env})).status).toBe(401);
+ expect(fetcher).not.toHaveBeenCalled();
+});
+it('checks passwords on the server and issues a secure HttpOnly cookie only after success',async()=>{
+ vi.stubGlobal('fetch',vi.fn(async()=>Response.json(true)));
+ const bad=await unlock({request:request('/api/preset-access',{password:'wrong'}),env});expect(bad.status).toBe(401);expect(bad.headers.has('Set-Cookie')).toBe(false);
+ const good=await unlock({request:request('/api/preset-access',{password:env.CUSTOM_PRESET_PASSWORD}),env});expect(good.status).toBe(200);const cookie=good.headers.get('Set-Cookie')!;expect(cookie).toContain('HttpOnly; Secure; SameSite=Strict');expect(cookie).not.toContain(env.CUSTOM_PRESET_PASSWORD!);expect(await good.text()).not.toContain(env.CUSTOM_PRESET_PASSWORD!);
+});
+it('enforces the persistent login attempt limit and fails closed if no password is configured',async()=>{
+ vi.stubGlobal('fetch',vi.fn(async()=>Response.json(false)));
+ expect((await unlock({request:request('/api/preset-access',{password:env.CUSTOM_PRESET_PASSWORD}),env})).status).toBe(429);
+ expect((await unlock({request:request('/api/preset-access',{password:'anything'}),env:{...env,CUSTOM_PRESET_PASSWORD:undefined}})).status).toBe(503);
+});
+it('rejects expired owner cookies and invalidates cookies when the password changes',async()=>{
+ const req=await ownerRequest('/api/film-presets',{});
+ expect((await publish({request:req.clone(),env:{...env,CUSTOM_PRESET_PASSWORD:'changed'}})).status).toBe(401);
+ const now=Date.now();vi.spyOn(Date,'now').mockReturnValue(now+3600001);try{expect((await publish({request:req,env})).status).toBe(401);}finally{vi.restoreAllMocks();}
+});
+it('keeps existing presets public without owner login and never exposes the password',async()=>{
+ vi.stubGlobal('fetch',vi.fn(async()=>Response.json([{id:'public-preset',name:'Shared film',settings:neutralSettings}])));
+ const result=await sharedPresets({request:new Request('https://studio.example/api/film-presets'),env});expect(result.status).toBe(200);const data=await result.text();expect(data).toContain('Shared film');expect(data).not.toContain(env.CUSTOM_PRESET_PASSWORD!);
 });

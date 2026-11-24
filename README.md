@@ -126,3 +126,5 @@ New Film Studio edits default to a 4:5 photo crop. Existing saved edits retain t
 ## Film simulation and shared custom presets
 
 Film Studio now separates Film simulation and Polaroid into tabs. Custom analyzes an Original/Goal image pair with OpenAI, ignores watermarks/text (with optional marked exclusions), previews a numeric canvas grade, and publishes named settings to Supabase for everyone. No image generation is used. Server credentials, a migration and Turnstile setup are required before replication works: [setup and verification](docs/custom-film-presets.md).
+
+Custom preset creation is password-protected on both server write endpoints. Add `CUSTOM_PRESET_PASSWORD` as a Cloudflare runtime **Secret**, and run [the owner-access migration](supabase/migrations/202611240002_preset_owner_access.sql). Existing shared presets remain available to all visitors. The password is not stored in the website bundle or repository.

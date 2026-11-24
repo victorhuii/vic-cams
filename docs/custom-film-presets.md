@@ -2,11 +2,11 @@
 
 Film Studio has **Film simulation** (borderless) and **Polaroid** (paper frames, date and optional caption) tabs. They share the uploaded photo and selected grade. Default crop is 4:5.
 
-Choose **Custom**, upload **Original** and **Goal**, then **Replicate**. The server asks an OpenAI vision model for strictly validated numeric exposure/color/texture settings. The browser renders the result with canvas; no image-generation tool or image-generation endpoint is used. After previewing, enter a name and save. Everyone can use the resulting preset in either tab, including in a fresh browser. Applying a preset makes no additional AI request.
+Choose **Custom**, enter the owner password, upload **Original** and **Goal**, then **Replicate**. The server asks an OpenAI vision model for strictly validated numeric exposure/color/texture settings. The browser renders the result with canvas; no image-generation tool or image-generation endpoint is used. After previewing, enter a name and save. Everyone can use the resulting preset in either tab, including in a fresh browser. Applying a preset makes no additional AI request.
 
 ## One-time setup on the existing Cloudflare Pages site
 
-1. In **Supabase → SQL Editor**, run [202611240001_film_presets.sql](../supabase/migrations/202611240001_film_presets.sql). This creates the shared `film_presets` table and a server-only daily analysis counter. It does not change existing photo storage policies.
+1. In **Supabase → SQL Editor**, run [202611240001_film_presets.sql](../supabase/migrations/202611240001_film_presets.sql). Also run [202611240002_preset_owner_access.sql](../supabase/migrations/202611240002_preset_owner_access.sql) to enable owner login and its attempt limit. These create the shared `film_presets` table, a server-only daily analysis counter and a password-attempt counter. It does not change existing photo storage policies.
 2. Create a **Cloudflare Turnstile** widget for the site's hostname. Managed mode is supported.
 3. In **Cloudflare Pages → this project → Settings → Variables and Secrets**, add the following **runtime** values (production and any preview environment you want to use):
 
@@ -14,6 +14,7 @@ Choose **Custom**, upload **Original** and **Goal**, then **Replicate**. The ser
    | --- | --- | --- |
    | `SUPABASE_URL` | Your existing `https://…supabase.co` URL, without backslashes | No |
    | `SUPABASE_SECRET_KEY` | Supabase Secret key beginning `sb_secret_` | **Yes** |
+   | `CUSTOM_PRESET_PASSWORD` | Your chosen password for creating custom presets | **Yes** |
    | `OPENAI_API_KEY` | OpenAI project API key with API access/billing | **Yes** |
    | `TURNSTILE_SITE_KEY` | Turnstile widget site key | No |
    | `TURNSTILE_SECRET_KEY` | Turnstile widget secret | **Yes** |
@@ -34,6 +35,9 @@ Only the settings and preset name are published. Reference images are resized to
 
 ## Protection and validation
 
+- Custom prompts for the password each time it is opened. The password is checked only on the server against `CUSTOM_PRESET_PASSWORD`; it is never embedded in frontend code or returned to visitors.
+- Both replication and saving require a signed, one-hour HttpOnly/Secure/SameSite=Strict cookie. Reading and applying existing presets remain public. Changing the password invalidates existing owner cookies. Anyone you share the password with can create presets; this is password-based access, not an account identity check.
+- Password attempts are limited to five per IP per 15-minute window with an atomic Supabase RPC. Only a keyed hash of the IP is stored.
 - Same-origin JSON requests, capped request/image sizes, bounded settings and strict structured output.
 - Turnstile must be verified server-side with the correct hostname/action before any paid call.
 - An atomic Supabase RPC caps analysis requests globally per UTC day, including unsuccessful upstream requests. The default is 20 calls/day, not a dollar budget.

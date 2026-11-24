@@ -1,3 +1,4 @@
+import {requirePresetOwner} from '../_lib/presetAccess';
 import {settingRanges,parseSettings,parseRegions} from '../../src/lib/imaging/customSettings';
 import {body,db,failure,HttpError,json,replicationReady,signDraft,verifyHuman,type Context} from '../_lib/presets';
 const properties=Object.fromEntries(Object.entries(settingRanges).map(([key,[minimum,maximum]])=>[key,{type:'number',minimum,maximum}]));
@@ -10,7 +11,7 @@ Then R=(R+warmth+tint*.5)*redGain; G=(G+warmth*.13-tint*.5)*greenGain; B=(B-warm
 Then saturation around Rec709 gray at multiplier 1+saturation/100; contrast centered at127.5 multiplier1+contrast/100; fade=v*(1-fade/255)+fade. Grain amplitude=grain*(.35+.65*(1-L)), deterministic zero mean noise [-.5,.5]. Vignette darkens corners up to vignette/100*.6. Finally clamp0..255. Neutral gamma/gains1, all others0. Prefer restrained settings over extremes. Do not try to fit watermarks. Brief note must honestly mention limitations, not promise exact recovery of an unknown preset.`;
 function photo(value:unknown){if(typeof value!=='string'||value.length>1500000||!/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+=*$/.test(value))throw new HttpError(400,'Upload an Original and Goal photo first.');return value;}
 export async function onRequestPost({request,env}:Context){
- try{if(!replicationReady(env))throw new HttpError(503,'Custom replication needs server setup.');const input=await body(request,3100000);const original=photo(input.original),goal=photo(input.goal);let regions;try{regions=parseRegions(input.excludedRegions??[]);}catch{throw new HttpError(400,'Invalid watermark selection.');}
+ try{await requirePresetOwner(request,env);if(!replicationReady(env))throw new HttpError(503,'Custom replication needs server setup.');const input=await body(request,3100000);const original=photo(input.original),goal=photo(input.goal);let regions;try{regions=parseRegions(input.excludedRegions??[]);}catch{throw new HttpError(400,'Invalid watermark selection.');}
  await verifyHuman(request,env,input.token);
  const configured=Number(env.PRESET_DAILY_LIMIT??20);const limit=Number.isFinite(configured)?Math.max(1,Math.min(1000,Math.floor(configured))):20;
  const quota=await db(env,'rpc/reserve_film_replication',{method:'POST',body:JSON.stringify({daily_limit:limit})});if(!quota.ok)throw new HttpError(503,'Custom replication needs database setup.');if(await quota.json()!==true)throw new HttpError(429,'Today’s replication limit has been reached. Try again tomorrow.');

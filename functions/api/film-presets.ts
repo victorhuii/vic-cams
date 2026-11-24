@@ -1,3 +1,4 @@
+import {requirePresetOwner} from '../_lib/presetAccess';
 import {body,db,failure,HttpError,json,readDraft,replicationReady,type Context} from '../_lib/presets';
 import {parseSettings} from '../../src/lib/imaging/customSettings';
 export async function onRequestGet({env}:Context){
@@ -5,7 +6,7 @@ export async function onRequestGet({env}:Context){
  return json({presets:rows.map(p=>({...p,settings:parseSettings(p.settings)})),replicationAvailable:replicationReady(env),turnstileSiteKey:env.TURNSTILE_SITE_KEY??''});}catch(e){return failure(e);}
 }
 export async function onRequestPost({request,env}:Context){
- try{const input=await body(request,10000);if(typeof input.name!=='string')throw new HttpError(400,'Give your preset a name.');const name=input.name.normalize('NFKC').trim().replace(/\s+/g,' ');if(name.length<1||name.length>40||/[\p{Cc}\p{Cf}<>]/u.test(name))throw new HttpError(400,'Use a preset name between 1 and 40 characters.');
+ try{await requirePresetOwner(request,env);const input=await body(request,10000);if(typeof input.name!=='string')throw new HttpError(400,'Give your preset a name.');const name=input.name.normalize('NFKC').trim().replace(/\s+/g,' ');if(name.length<1||name.length>40||/[\p{Cc}\p{Cf}<>]/u.test(name))throw new HttpError(400,'Use a preset name between 1 and 40 characters.');
  const draft=await readDraft(env,input.ticket);
  const response=await db(env,'film_presets?on_conflict=id',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=representation'},body:JSON.stringify({id:draft.id,name,settings:draft.settings})});
  if(!response.ok){if(response.status===409)throw new HttpError(409,'That preset name is taken. Choose another.');throw new HttpError(503,'Your preset could not be saved. Try again.');}

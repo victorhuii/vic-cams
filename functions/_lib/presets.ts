@@ -1,12 +1,12 @@
 import {parseSettings,type CustomSettings} from '../../src/lib/imaging/customSettings';
-export type Env={OPENAI_API_KEY?:string;OPENAI_PRESET_MODEL?:string;SUPABASE_URL?:string;SUPABASE_SECRET_KEY?:string;SUPABASE_SERVICE_ROLE_KEY?:string;TURNSTILE_SITE_KEY?:string;TURNSTILE_SECRET_KEY?:string;PRESET_DAILY_LIMIT?:string};
+export type Env={CUSTOM_PRESET_PASSWORD?:string;OPENAI_API_KEY?:string;OPENAI_PRESET_MODEL?:string;SUPABASE_URL?:string;SUPABASE_SECRET_KEY?:string;SUPABASE_SERVICE_ROLE_KEY?:string;TURNSTILE_SITE_KEY?:string;TURNSTILE_SECRET_KEY?:string;PRESET_DAILY_LIMIT?:string};
 export type Context={request:Request;env:Env};
 export class HttpError extends Error {constructor(public status:number,message:string){super(message);}}
 export function json(data:unknown,status=200){return Response.json(data,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});}
 export function failure(e:unknown){return json({error:e instanceof HttpError?e.message:'The preset service is unavailable. Please try again.'},e instanceof HttpError?e.status:502);}
 function serverKey(env:Env){return env.SUPABASE_SECRET_KEY||env.SUPABASE_SERVICE_ROLE_KEY;}
 export function databaseReady(env:Env){return !!env.SUPABASE_URL&&!!serverKey(env);}
-export function replicationReady(env:Env){return databaseReady(env)&&!!env.OPENAI_API_KEY&&!!env.TURNSTILE_SECRET_KEY&&!!env.TURNSTILE_SITE_KEY;}
+export function replicationReady(env:Env){return databaseReady(env)&&!!env.CUSTOM_PRESET_PASSWORD&&!!env.OPENAI_API_KEY&&!!env.TURNSTILE_SECRET_KEY&&!!env.TURNSTILE_SITE_KEY;}
 export async function body(request:Request,max:number){
  if(request.headers.get('origin')!==new URL(request.url).origin)throw new HttpError(403,'Please use the preset editor on this site.');
  if(!request.headers.get('content-type')?.startsWith('application/json'))throw new HttpError(415,'Expected a JSON request.');

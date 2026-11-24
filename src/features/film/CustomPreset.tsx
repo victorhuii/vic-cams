@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState,type PointerEvent} from 'react';
+import {useEffect,useRef,useState,type FormEvent,type PointerEvent} from 'react';
 import {canvas,fileData,loadImage,renderPhoto,defaultEdit} from '../../lib/imaging/engine';
 import {parseSettings,parseRegions,type SharedPreset,type CustomSettings,type ExcludedRegion} from '../../lib/imaging/customSettings';
 import {Turnstile} from './Turnstile';
@@ -8,7 +8,18 @@ async function reference(file:File){
  const src=await fileData(file),image=await loadImage(src);const scale=Math.min(1,1200/Math.max(image.naturalWidth,image.naturalHeight));const c=canvas(image.naturalWidth*scale,image.naturalHeight*scale);c.getContext('2d')!.drawImage(image,0,0,c.width,c.height);return {source:src,analysis:c.toDataURL('image/jpeg',.9)};
 }
 export async function presetResponse(response:Response){const data=await response.json().catch(()=>null);if(!response.ok)throw new Error(data?.error||'The preset service is unavailable.');if(!data)throw new Error('The preset service needs server setup.');return data;}
-export function CustomPreset({siteKey,available,onSave,onClose}:{siteKey:string;available:boolean;onSave:(preset:SharedPreset,original:string)=>void;onClose:()=>void}){
+type CustomProps={siteKey:string;available:boolean;onSave:(preset:SharedPreset,original:string)=>void;onClose:()=>void};
+export function CustomPreset(props:CustomProps){
+ const [unlocked,setUnlocked]=useState(false),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const request=useRef<AbortController|null>(null);useEffect(()=>()=>request.current?.abort(),[]);
+ async function unlock(e:FormEvent){e.preventDefault();if(!password||busy)return;const controller=new AbortController();request.current=controller;setBusy(true);setError('');
+  try{const result=await presetResponse(await fetch('/api/preset-access',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({password})}));if(result.unlocked!==true)throw new Error('Could not unlock Custom.');if(!controller.signal.aborted){setPassword('');setUnlocked(true);}}
+  catch(e){if(!controller.signal.aborted)setError((e as Error).message);}finally{if(!controller.signal.aborted)setBusy(false);}
+ }
+ if(unlocked)return <PresetEditor {...props}/>;
+ return <section className="custom-preset" aria-label="Unlock custom presets"><div className="custom-heading"><h2>Custom</h2><button className="text-button" onClick={props.onClose}>Close</button></div><form className="preset-password" onSubmit={e=>void unlock(e)}><label>Password<input autoFocus type="password" aria-label="Custom preset password" autoComplete="current-password" maxLength={256} value={password} disabled={busy} onChange={e=>setPassword(e.target.value)}/></label><button className="button dark" disabled={busy||!password}>{busy?'Unlocking…':'Unlock Custom'}</button>{error&&<p className="preset-error" role="alert">{error}</p>}</form></section>;
+}
+function PresetEditor({siteKey,available,onSave,onClose}:CustomProps){
  const [original,setOriginal]=useState(''),[goal,setGoal]=useState(''),[regions,setRegions]=useState<ExcludedRegion[]>([]),[drag,setDrag]=useState<ExcludedRegion|null>(null),[draft,setDraft]=useState<Draft|null>(null),[name,setName]=useState(''),[busy,setBusy]=useState(''),[error,setError]=useState(''),[token,setToken]=useState(''),[verification,setVerification]=useState(0);
  const originalSource=useRef('');
  const request=useRef<AbortController|null>(null),versions=useRef({original:0,goal:0}),start=useRef<{x:number;y:number}|null>(null);
