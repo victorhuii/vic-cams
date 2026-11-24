@@ -34,3 +34,7 @@ The supplied 90s chart extraction is also bundled as **Evo 90s**, available in F
 ## Built-in Evo Fuji NN
 
 Evo Fuji NN is bundled with a 33³ LUT and estimated grain 19. It uses the supplied IMG_2382.jpg (chart A, 1206×1191) and IMG_2383.jpg (chart B, 1206×1203), both converted from embedded Display P3 to sRGB. Registration estimated a uniform scale of 1206/512 and top crop offsets of 12 and 2 export pixels. The companion chart provided coverage for samples missing from either crop. Color-space smoothing and inconsistent-sample rejection reduced random texture and chart artifacts before sampling the LUT. This is a JPEG-derived approximation: clipping, interpolation, compression, original grain size and spatial effects cannot be exactly reversed. No separate vignette was added. Selecting it starts at 100% intensity and clears extra adjustments, just like Evo 90s; batch mode uses the same grade. No Supabase or OpenAI setup is needed to use the built-in filter.
+
+### Fuji NN correction from a real-photo pair
+
+The original cropped-chart extraction produced a green shadow cast. The bundled Fuji NN LUT was replaced by a smooth global RGB response fitted to the supplied IMG_2360.JPG original and IMG_2380.jpg target (converted from Display P3 to sRGB), aligned for crop/scale differences. The revised preset neutralizes near-black shadows, lifts flash highlights and uses estimated grain 22. The color response is a photo-pair calibration, not recovery of Evoto internal settings, and should be checked against further photos before assuming universal accuracy.

@@ -14,7 +14,7 @@ export const films:Film[] = [
 {id:'dreamy',name:'Dreamy Film',note:'Creamy whites · pink warmth',color:'#ddbac3',warmth:7,contrast:-15,saturation:-10,fade:10,grain:5,tint:6,bloom:12},
 {id:'hp5',name:'Ilford HP5',note:'Organic monochrome · texture',color:'#73736e',warmth:0,contrast:22,saturation:-100,fade:5,grain:24,tint:0,bloom:0},
 {id:'evo90s',name:'Evo 90s',note:'Evoto chart colors · estimated film grain',color:'#a77d66',warmth:0,contrast:0,saturation:0,fade:0,grain:0,tint:0,bloom:0,settings:evo90s},
-{id:'evoFujiNN',name:'Evo Fuji NN',note:'Evoto chart colors · approximate JPEG extraction',color:'#829781',warmth:0,contrast:0,saturation:0,fade:0,grain:0,tint:0,bloom:0,settings:evoFujiNN}
+{id:'evoFujiNN',name:'Evo Fuji NN',note:'Photo-calibrated colors · estimated film grain',color:'#829781',warmth:0,contrast:0,saturation:0,fade:0,grain:0,tint:0,bloom:0,settings:evoFujiNN}
 ];
 export const defaults:Adjustments={exposure:0,contrast:0,saturation:0,warmth:0,grain:0,fade:0,vignette:0};
 export type Edit = {custom?:CustomSettings;film:string; intensity:number; adjustments:Adjustments; frame:string; ratio:string; zoom:number; x:number; y:number; rotation:number; thickness:number; paper:string; caption:string; date:boolean};
