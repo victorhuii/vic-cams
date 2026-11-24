@@ -30,3 +30,7 @@ Supabase stores preset names and numeric/LUT settings only. Normal photo gallery
 ## Built-in Evo 90s
 
 The supplied 90s chart extraction is also bundled as **Evo 90s**, available in Film Studio and Polaroid without an import or server setup. It uses the same 33³ LUT and estimated grain 19 as the generated Markdown. Selecting it starts at 100% intensity and clears extra adjustments so the extracted grade is applied directly. Its color/texture matching remains approximate; no independently measured spatial effects are claimed.
+
+## Built-in Evo Fuji NN
+
+Evo Fuji NN is bundled with a 33³ LUT and estimated grain 19. It uses the supplied IMG_2382.jpg (chart A, 1206×1191) and IMG_2383.jpg (chart B, 1206×1203), both converted from embedded Display P3 to sRGB. Registration estimated a uniform scale of 1206/512 and top crop offsets of 12 and 2 export pixels. The companion chart provided coverage for samples missing from either crop. Color-space smoothing and inconsistent-sample rejection reduced random texture and chart artifacts before sampling the LUT. This is a JPEG-derived approximation: clipping, interpolation, compression, original grain size and spatial effects cannot be exactly reversed. No separate vignette was added. Selecting it starts at 100% intensity and clears extra adjustments, just like Evo 90s; batch mode uses the same grade. No Supabase or OpenAI setup is needed to use the built-in filter.
